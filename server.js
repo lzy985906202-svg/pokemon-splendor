@@ -20,6 +20,7 @@ const rules = require("./game.js");
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
+  serveClient: true,
   cors: {
     origin: true,
     credentials: true
@@ -39,10 +40,72 @@ app.get("/health", (req, res) => {
   });
 });
 
-// 静态文件服务
-app.use(express.static(path.join(__dirname), {
-  extensions: ["html"]
-}));
+// 静态资源诊断接口
+app.get("/health/assets", (req, res) => {
+  res.setHeader("Cache-Control", "no-store");
+  const checks = {
+    onlineJs: fs.existsSync(path.join(__dirname, "online.js")),
+    gameJs: fs.existsSync(path.join(__dirname, "game.js")),
+    styleCss: fs.existsSync(path.join(__dirname, "style.css")),
+    cardsJson: fs.existsSync(path.join(__dirname, "cards.json"))
+  };
+  let socketClient = false;
+  try {
+    const pkgRoot = path.dirname(require.resolve("socket.io/package.json"));
+    socketClient = fs.existsSync(path.join(pkgRoot, "client-dist", "socket.io.js"));
+  } catch (e) {
+    socketClient = false;
+  }
+  res.json({ ok: true, assets: checks, socketIoClient: socketClient });
+});
+
+// =============================
+// 显式静态路由（确保 Render 上 /online.js /game.js 不被 404）
+// =============================
+app.get("/online.js", (req, res) => {
+  const filePath = path.join(__dirname, "online.js");
+  if (!fs.existsSync(filePath)) {
+    console.error("[静态资源] online.js 不存在:", filePath);
+    return res.status(404).send("online.js not found");
+  }
+  res.type("application/javascript");
+  res.sendFile(filePath);
+});
+
+app.get("/game.js", (req, res) => {
+  const filePath = path.join(__dirname, "game.js");
+  if (!fs.existsSync(filePath)) {
+    console.error("[静态资源] game.js 不存在:", filePath);
+    return res.status(404).send("game.js not found");
+  }
+  res.type("application/javascript");
+  res.sendFile(filePath);
+});
+
+// Socket.IO 客户端 fallback（serveClient=true 通常已自动处理，
+// 此路由仅作为兜底，确保 /socket.io/socket.io.js 一定返回 JS）
+app.get("/socket.io/socket.io.js", (req, res, next) => {
+  // 排除 Engine.IO 协议请求（带 EIO 参数的走 socket.io 原生处理）
+  if (req.query && req.query.EIO) {
+    return next();
+  }
+  let clientPath = null;
+  try {
+    const pkgRoot = path.dirname(require.resolve("socket.io/package.json"));
+    const candidate = path.join(pkgRoot, "client-dist", "socket.io.js");
+    if (fs.existsSync(candidate)) {
+      clientPath = candidate;
+    }
+  } catch (e) {
+    // 找不到包路径，交给下一个中间件
+  }
+  if (!clientPath) return next();
+  res.type("application/javascript");
+  res.sendFile(clientPath);
+});
+
+// 静态文件服务（简化，不再附加 extensions 选项）
+app.use(express.static(__dirname));
 
 // =============================
 // 局域网 IP 查询（供房主显示加入地址）
@@ -515,6 +578,20 @@ server.listen(PORT, "0.0.0.0", () => {
   console.log(`  监听端口：${PORT}`);
   console.log(`  本机访问：http://localhost:${PORT}`);
   console.log(`  健康检查：http://localhost:${PORT}/health`);
+  // 启动时静态资源诊断（Render 排查用）
+  console.log(`[静态资源检查]`);
+  console.log(`  __dirname: ${__dirname}`);
+  console.log(`  online.js: ${fs.existsSync(path.join(__dirname, "online.js"))}`);
+  console.log(`  game.js: ${fs.existsSync(path.join(__dirname, "game.js"))}`);
+  console.log(`  style.css: ${fs.existsSync(path.join(__dirname, "style.css"))}`);
+  console.log(`  cards.json: ${fs.existsSync(path.join(__dirname, "cards.json"))}`);
+  try {
+    const pkgRoot = path.dirname(require.resolve("socket.io/package.json"));
+    const candidate = path.join(pkgRoot, "client-dist", "socket.io.js");
+    console.log(`  socket.io client: ${fs.existsSync(candidate)} (${candidate})`);
+  } catch (e) {
+    console.log(`  socket.io client: 未找到（${e.message}）`);
+  }
   const lans = getLanIPv4List();
   if (lans.length > 0) {
     lans.forEach((lan) => {
