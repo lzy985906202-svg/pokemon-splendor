@@ -256,13 +256,22 @@ function broadcastRoomUpdate(room) {
 
 function broadcastState(room) {
   if (!room.gameState) return;
+  // P0-1 修复：剔除 decks 数组内容（只保留 length），防止客户端 DevTools 看到下一张牌（隐藏信息泄漏）
+  // 客户端只用 decks.rare.length / decks.legend.length 显示牌堆剩余数量，不读取具体内容
+  const originalDecks = room.gameState.decks || {};
+  const safeDecks = {};
+  for (const key of Object.keys(originalDecks)) {
+    const arr = Array.isArray(originalDecks[key]) ? originalDecks[key] : [];
+    safeDecks[key] = new Array(arr.length); // length 相同，但元素全 undefined（JSON 序列化为 null）
+  }
+  const safeState = { ...room.gameState, decks: safeDecks };
   room.players.forEach((p) => {
     if (p.socketId && p.connected) {
-      io.to(p.socketId).emit("stateUpdated", { roomCode: room.roomCode, gameState: room.gameState });
+      io.to(p.socketId).emit("stateUpdated", { roomCode: room.roomCode, gameState: safeState });
     }
   });
   room.spectators.forEach((sid) => {
-    io.to(sid).emit("stateUpdated", { roomCode: room.roomCode, gameState: room.gameState });
+    io.to(sid).emit("stateUpdated", { roomCode: room.roomCode, gameState: safeState });
   });
 }
 
@@ -377,6 +386,9 @@ function runAllAITurns(room) {
 // =============================
 // Socket.IO 事件处理
 // =============================
+// P1-4 修复：双击重复提交防护。key=socket.id，ack 返回前拒绝同一 socket 的第二次 playerAction
+const inFlightActions = new Set();
+
 io.on("connection", (socket) => {
   console.log(`[连接] ${socket.id}`);
 
@@ -490,6 +502,12 @@ io.on("connection", (socket) => {
 
   // 玩家行动
   socket.on("playerAction", (payload, ack) => {
+    // P1-4 修复：双击重复提交防护
+    if (inFlightActions.has(socket.id)) {
+      if (ack) ack({ ok: false, error: "上一个动作正在处理中，请稍候。" });
+      return;
+    }
+    inFlightActions.add(socket.id);
     try {
       const { roomCode, seatIndex, action } = payload || {};
       const room = rooms.get((roomCode || "").toUpperCase());
@@ -532,6 +550,9 @@ io.on("connection", (socket) => {
       if (ack) ack({ ok: true });
     } catch (e) {
       if (ack) ack({ ok: false, error: e.message });
+    } finally {
+      // P1-4 修复：无论成功失败都释放锁，防止 socket 永久卡住
+      inFlightActions.delete(socket.id);
     }
   });
 

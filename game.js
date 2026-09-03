@@ -3798,7 +3798,7 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
       const isAI = /AI/.test(entry.player || "");
       const cls = isAI ? "ai" : "";
       return `<div class="action-log-entry ${cls}">
-        <span class="muted" style="font-size:10px;">T${entry.turn}</span>
+        <span class="muted" style="font-size:10px;">T${entry.turn ?? "?"}</span>
         <strong>${escapeHtml(entry.player || "")}</strong>
         ${escapeHtml(entry.message)}
       </div>`;
@@ -4373,6 +4373,8 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
     });
 
     els.restartButton.addEventListener("click", () => {
+      // P0-2 修复：联机模式禁用本地重新开始（防状态分叉）
+      if (onlineMode) { notify("联机模式不支持本地重新开始，如需新局请新建房间。", "warn"); return; }
       if (gameState && !window.confirm("确认清除当前存档并回到开始界面？")) return;
       clearAISchedule();
       clearSavedGame();
@@ -4410,7 +4412,11 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
     els.reserveSelectedButton.addEventListener("click", reserveSelectedCard);
     els.blindReserveButton.addEventListener("click", () => blindReserve(els.blindDeck.value));
     els.buySelectedButton.addEventListener("click", buySelectedCard);
-    if (els.undoButton) els.undoButton.addEventListener("click", undoLastAction);
+    if (els.undoButton) els.undoButton.addEventListener("click", () => {
+      // P0-2 修复：联机模式禁用本地撤销（防状态分叉）
+      if (onlineMode) { notify("联机模式不支持本地撤销。", "warn"); return; }
+      undoLastAction();
+    });
     els.skipEvolutionButton.addEventListener("click", skipEvolution);
 
     if (els.confirmTokenSelectionButton) {
@@ -5179,7 +5185,20 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
     cacheElements();
     bindEvents();
     notify("正在读取卡牌数据...", "info");
-    const saved = loadSavedGame();
+    // P1-1 修复：联机刷新时跳过单机存档加载，避免短暂渲染单机画面造成 localStorage 冲突
+    let skipLocalSave = false;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const urlRoom = params.get("room");
+      const sessionRaw = localStorage.getItem(ONLINE_SESSION_KEY);
+      if (urlRoom && sessionRaw) {
+        const session = JSON.parse(sessionRaw);
+        if (session && session.roomCode === urlRoom.toUpperCase() && session.playerName) {
+          skipLocalSave = true;
+        }
+      }
+    } catch (e) { /* noop */ }
+    const saved = skipLocalSave ? null : loadSavedGame();
     try {
       await loadCardDataAutomatically();
       if (saved) {
