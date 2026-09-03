@@ -4687,6 +4687,9 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
           window.__pokemonOnline.connect();
           const res = await window.__pokemonOnline.createRoom(name, pc, ac);
           showOnlineLobby(res.roomCode, res.room, 0);
+          // v0.9.9: 保存会话供刷新后自动重连 + 同步 URL
+          saveOnlineSession(res.roomCode, name);
+          updateRoomUrl(res.roomCode);
         } catch (e) {
           notify(`创建房间失败：${e.message}`, "error");
         }
@@ -4704,6 +4707,9 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
           await window.__pokemonOnline.connect();
           const res = await window.__pokemonOnline.joinRoom(code, name);
           showOnlineLobby(res.roomCode, res.room, res.seatIndex);
+          // v0.9.9: 保存会话供刷新后自动重连 + 同步 URL
+          saveOnlineSession(res.roomCode, name);
+          updateRoomUrl(res.roomCode);
         } catch (e) {
           notify(`加入房间失败：${e.message}`, "error");
         }
@@ -4726,6 +4732,8 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
       els.leaveRoomButton.addEventListener("click", () => {
         if (window.__pokemonOnline) window.__pokemonOnline.disconnect();
         clearOnlineMode();
+        // v0.9.9: 用户主动离开 → 清除保存的会话，避免下次刷新又自动重连
+        clearOnlineSession();
         if (els.onlineLobby) els.onlineLobby.classList.add("hidden");
         if (els.onlinePanel) els.onlinePanel.classList.remove("hidden");
         notify("已离开房间。", "info");
@@ -4938,6 +4946,66 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
   }
 
   // v0.9.2 解析 URL ?room=房间号：切换到联机模式、填入房间号、光标定位到名称输入框
+  // v0.9.9: 联机会话本地持久化（刷新后静默自动重连）
+  const ONLINE_SESSION_KEY = "pokemonSplendorOnlineSession.v1";
+
+  function saveOnlineSession(roomCode, playerName) {
+    try {
+      localStorage.setItem(ONLINE_SESSION_KEY, JSON.stringify({
+        roomCode: roomCode,
+        playerName: playerName,
+        savedAt: Date.now()
+      }));
+    } catch (e) { /* localStorage 不可用时静默降级 */ }
+  }
+
+  function loadOnlineSession() {
+    try {
+      const raw = localStorage.getItem(ONLINE_SESSION_KEY);
+      if (!raw) return null;
+      const data = JSON.parse(raw);
+      if (!data || !data.roomCode || !data.playerName) return null;
+      // 7 天过期，避免陈旧会话总是触发"重连失败"通知
+      if (data.savedAt && Date.now() - data.savedAt > 7 * 24 * 60 * 60 * 1000) {
+        localStorage.removeItem(ONLINE_SESSION_KEY);
+        return null;
+      }
+      return data;
+    } catch (e) { return null; }
+  }
+
+  function clearOnlineSession() {
+    try { localStorage.removeItem(ONLINE_SESSION_KEY); } catch (e) { /* noop */ }
+  }
+
+  // v0.9.9: 创建/加入房间后，把 ?room= 写入 URL（不创建新历史条目，避免影响后退键）
+  // 这样房主刷新也能触发 silentRejoinRoom（房主创建房间时 URL 原本是干净的）
+  function updateRoomUrl(roomCode) {
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set("room", roomCode);
+      window.history.replaceState({}, "", url.toString());
+    } catch (e) { /* noop */ }
+  }
+
+  // v0.9.9: URL 带 ?room= 且本地存了玩家名时，刷新后静默自动重连到原房间
+  async function silentRejoinRoom(roomCode, playerName) {
+    try {
+      if (!window.__pokemonOnline) return;
+      await window.__pokemonOnline.connect();
+      const res = await window.__pokemonOnline.joinRoom(roomCode, playerName);
+      showOnlineLobby(res.roomCode, res.room, res.seatIndex);
+      // setOnlineState 已在 joinRoom 内部被调用（res.gameState 存在时），自动恢复游戏进行中状态
+    } catch (e) {
+      // 重连失败：清除本地会话，避免下次还失败；显示错误并聚焦玩家名输入框
+      clearOnlineSession();
+      notify("自动重连失败：" + e.message + "。请重新输入玩家名加入。", "warn");
+      if (els.onlineJoinName) {
+        try { els.onlineJoinName.focus(); } catch (e2) { /* noop */ }
+      }
+    }
+  }
+
   function applyRoomCodeFromUrl() {
     if (typeof window === "undefined" || !window.location) return null;
     let code = null;
@@ -4957,7 +5025,15 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
     }
     // 填入房间号
     if (els.onlineRoomCode) els.onlineRoomCode.value = code;
-    // 光标定位到玩家名称输入框
+    // v0.9.9: 静默自动重连 — URL ?room= 与本地保存的会话房间号匹配时，自动尝试加入
+    const savedSession = loadOnlineSession();
+    if (savedSession && savedSession.playerName && savedSession.roomCode === code) {
+      // 预填玩家名（即便重连失败，用户也能直接点按钮重试）
+      if (els.onlineJoinName) els.onlineJoinName.value = savedSession.playerName;
+      silentRejoinRoom(code, savedSession.playerName);
+      return code;
+    }
+    // 无保存会话或房间号不匹配 → 退回旧行为：聚焦玩家名输入框等用户输入
     if (els.onlineJoinName) {
       try { els.onlineJoinName.focus(); } catch (e) { /* noop */ }
     }
