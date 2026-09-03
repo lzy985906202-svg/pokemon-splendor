@@ -3795,6 +3795,146 @@
         }
       });
 
+      // =============================
+      // v0.9.5.4 — 联机"token 足够却显示 token 不足" Bug 针对性测试
+      // =============================
+
+      await test("测试170：v0.9.5.4 — getPayInfo 返回 payable 字段（player red2+blue2 买 cost red2+blue2 应可购买）", function () {
+        var api = getAPI();
+        api.resetStateForTest();
+        api.createEmptyGameState(2);
+        var state = api.getState();
+        // 设置玩家 0 的 token：red=2 blue=2，其余 0
+        state.players[0].tokens = { red: 2, blue: 2, black: 0, pink: 0, yellow: 0, purple: 0 };
+        // 构造一张费用 red=2 blue=2 的卡
+        var card = { id: "test_pidgey", name: "波波", cost: { red: 2, blue: 2 }, points: 0, level: 1, category: "normal", image: "assets/cards/pidgey.png" };
+        var info = api.getPayInfo(state.players[0], card);
+        assert(info, "getPayInfo 必须返回对象");
+        assert(info.payable === true, "info.payable 必须为 true（玩家 red2+blue2 应能买 cost red2+blue2）");
+        assert(info.payCost !== null, "info.payCost 不能为 null");
+        assertEqual(info.payCost.red, 2, "实际支付 red 应为 2");
+        assertEqual(info.payCost.blue, 2, "实际支付 blue 应为 2");
+        assertEqual(info.payCost.purple, 0, "实际支付 purple 应为 0（无需大师球补足）");
+      });
+
+      await test("测试171：v0.9.5.4 — calculatePayCost 不再误返回 null（波波 red2+blue2 场景）", function () {
+        var api = getAPI();
+        api.resetStateForTest();
+        api.createEmptyGameState(2);
+        var state = api.getState();
+        state.players[0].tokens = { red: 2, blue: 2, black: 0, pink: 0, yellow: 0, purple: 0 };
+        var card = { id: "test_pidgey", name: "波波", cost: { red: 2, blue: 2 }, points: 0, level: 1, category: "normal" };
+        var payCost = api.calculatePayCost(state.players[0], card);
+        assert(payCost !== null, "calculatePayCost 必须返回非 null（玩家 token 完全足够）");
+        assertEqual(payCost.red, 2, "payCost.red 应为 2");
+        assertEqual(payCost.blue, 2, "payCost.blue 应为 2");
+        assertEqual(payCost.purple, 0, "payCost.purple 应为 0");
+      });
+
+      await test("测试172：v0.9.5.4 — 联机我的回合 + token 足够 → selected-card-panel 显示捕捉按钮（无 token 不足）", function () {
+        var api = getAPI();
+        api.resetStateForTest();
+        api.createEmptyGameState(2);
+        var state = api.getState();
+        // 联机模式：onlineSeatIndex=0, currentPlayerIndex=0
+        api.setOnlineModeForTest(true);
+        api.setOnlineSeatIndexForTest(0);
+        state.onlineMode = true;
+        state.currentPlayerIndex = 0;
+        state.phase = "awaitAction";
+        state.mainActionDone = false;
+        // 玩家 0 token red2+blue2
+        state.players[0].tokens = { red: 2, blue: 2, black: 0, pink: 0, yellow: 0, purple: 0 };
+        // 选中一张 cost red2+blue2 的市场卡
+        var card = state.market.level1[0];
+        // 覆盖卡费用为 red2+blue2
+        card.cost = { red: 2, blue: 2 };
+        api.setSelectedCard("market", card.id, "level1");
+        var html = document.getElementById("selectedCardInfo").innerHTML;
+        // 关键断言：不应出现"token 不足"
+        assert(html.indexOf("token 不足") < 0, "selected-card-panel 不应显示'token 不足'（玩家 token 完全足够）");
+        // 应显示"可以捕捉"
+        assert(html.indexOf("可以捕捉") >= 0, "selected-card-panel 应显示'可以捕捉'");
+        // 应有可点击的捕捉按钮（不带 disabled）
+        assert(/<button[^>]*data-action="buy-selected"[^>]*>捕捉</.test(html), "应有 data-action=buy-selected 的捕捉按钮");
+        assert(!/<button[^>]*data-action="buy-selected"[^>]*disabled/.test(html), "捕捉按钮不应被 disabled");
+      });
+
+      await test("测试173：v0.9.5.4 — 联机不是我的回合 → 显示'当前不是你的回合'，不显示'token 不足'", function () {
+        var api = getAPI();
+        api.resetStateForTest();
+        api.createEmptyGameState(2);
+        var state = api.getState();
+        // 联机模式：onlineSeatIndex=1, currentPlayerIndex=0（不是我的回合）
+        api.setOnlineModeForTest(true);
+        api.setOnlineSeatIndexForTest(1);
+        state.onlineMode = true;
+        state.currentPlayerIndex = 0;
+        state.phase = "awaitAction";
+        state.mainActionDone = false;
+        // 玩家 0（当前行动玩家）token red2+blue2
+        state.players[0].tokens = { red: 2, blue: 2, black: 0, pink: 0, yellow: 0, purple: 0 };
+        var card = state.market.level1[0];
+        card.cost = { red: 2, blue: 2 };
+        api.setSelectedCard("market", card.id, "level1");
+        var html = document.getElementById("selectedCardInfo").innerHTML;
+        // 关键断言：不应显示"token 不足"（不是我的回合时不应混淆两种状态）
+        assert(html.indexOf("token 不足") < 0, "不是我的回合时不应显示'token 不足'（避免状态混淆）");
+        // 应显示"当前不是你的回合"
+        assert(html.indexOf("当前不是你的回合") >= 0, "应显示'当前不是你的回合'");
+        // 不应有可点击的捕捉按钮
+        assert(html.indexOf('data-action="buy-selected"') < 0, "不是我的回合时不应渲染捕捉按钮");
+      });
+
+      await test("测试174：v0.9.5.4 — isOnlineLocalTurn 与顶部状态保持一致（无矛盾）", function () {
+        var api = getAPI();
+        api.resetStateForTest();
+        api.createEmptyGameState(2);
+        var state = api.getState();
+        api.setOnlineModeForTest(true);
+        api.setOnlineSeatIndexForTest(0);
+        state.onlineMode = true;
+        state.currentPlayerIndex = 0; // 我的回合
+        var isMyTurn = api.isOnlineLocalTurn();
+        assert(isMyTurn === true, "currentPlayerIndex===onlineSeatIndex 时 isOnlineLocalTurn 必须为 true");
+        // 切换到不是我的回合
+        state.currentPlayerIndex = 1;
+        var isMyTurn2 = api.isOnlineLocalTurn();
+        assert(isMyTurn2 === false, "currentPlayerIndex!==onlineSeatIndex 时 isOnlineLocalTurn 必须为 false");
+      });
+
+      await test("测试175：v0.9.5.4 — 服务器 authoritative：玩家 red2+blue2 买 cost red2+blue2 后 token 归零", function () {
+        var api = getAPI();
+        api.resetStateForTest();
+        api.createEmptyGameState(2);
+        var state = api.getState();
+        state.players[0].tokens = { red: 2, blue: 2, black: 0, pink: 0, yellow: 0, purple: 0 };
+        state.currentPlayerIndex = 0;
+        state.phase = "awaitAction";
+        state.mainActionDone = false;
+        // 选中市场 level1 的第一张卡
+        var card = state.market.level1[0];
+        var cardId = card.id;
+        // 覆盖费用为 red2+blue2
+        card.cost = { red: 2, blue: 2 };
+        // 通过 applyOnlineActionToState 模拟服务器端执行 buy（注意 action.type 必须为 "buy"，对应 findMatchingLegalAction）
+        var action = { type: "buy", source: "market", marketKey: "level1", cardId: cardId };
+        var result = api.applyOnlineActionToState(state, 0, action);
+        assert(result && result.ok === true, "applyOnlineActionToState 应返回 ok:true（行动合法）");
+        // applyOnlineActionToState 内部对 state 做 clone，验证应基于返回的 result.state
+        var newState = result.state;
+        assert(newState, "result.state 必须存在（applyOnlineActionToState 返回克隆后的新 state）");
+        assertEqual(newState.players[0].tokens.red, 0, "购买后 red 应为 0");
+        assertEqual(newState.players[0].tokens.blue, 0, "购买后 blue 应为 0");
+        // 验证卡进入 tableau
+        var inTableau = newState.players[0].tableau.some(function (c) { return c.id === cardId; });
+        assert(inTableau, "购买后卡牌应进入玩家 tableau");
+        // 验证市场对应位置已补牌
+        var stillInMarket = newState.market.level1.some(function (c) { return c.id === cardId; });
+        assert(!stillInMarket, "购买的卡不应仍在市场");
+        assertEqual(newState.market.level1.length, 4, "市场 level1 补牌后应仍有 4 张卡");
+      });
+
     });
   }
 

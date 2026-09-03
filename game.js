@@ -759,7 +759,22 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
       requiredAfterDiscount[color] = Math.max(0, cost[color] - (discount[color] || 0));
     });
     const payCost = calculatePayCost(player, card);
-    return { cost, discount, requiredAfterDiscount, payCost };
+    // v0.9.5.4 修复：必须返回 payable 字段，否则 renderSelectedInfo 中 info.payable 恒为 undefined，
+    // 导致即使玩家 token 足够，selected-card-panel 仍错误显示"token 不足"且捕捉按钮被禁用。
+    return { cost, discount, requiredAfterDiscount, payCost, payable: payCost !== null };
+  }
+
+  // v0.9.5.4 联机模式 selected-card-panel / buySelectedCard 等需要判断"本地能否行动"时使用的统一辅助函数
+  // 单机模式：返回 currentPlayer()（当前行动玩家）
+  // 联机模式：若不是本地玩家回合，返回 null（不允许操作）；若为本地玩家回合，返回 currentPlayer()
+  // 这样 renderSelectedInfo 内部能正确区分"不是我的回合"与"token 不足"两种不同状态
+  function getActionPlayerForUI() {
+    if (!gameState) return null;
+    if (onlineMode) {
+      if (!isOnlineLocalTurn()) return null;
+      return gameState.players[gameState.currentPlayerIndex] || null;
+    }
+    return currentPlayer();
   }
 
   function canEvolve(player, baseCard, targetCard) {
