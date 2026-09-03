@@ -46,6 +46,7 @@ app.get("/health/assets", (req, res) => {
   const checks = {
     onlineJs: fs.existsSync(path.join(__dirname, "online.js")),
     gameJs: fs.existsSync(path.join(__dirname, "game.js")),
+    bgmJs: fs.existsSync(path.join(__dirname, "bgm.js")),
     styleCss: fs.existsSync(path.join(__dirname, "style.css")),
     cardsJson: fs.existsSync(path.join(__dirname, "cards.json"))
   };
@@ -77,6 +78,17 @@ app.get("/game.js", (req, res) => {
   if (!fs.existsSync(filePath)) {
     console.error("[静态资源] game.js 不存在:", filePath);
     return res.status(404).send("game.js not found");
+  }
+  res.type("application/javascript");
+  res.sendFile(filePath);
+});
+
+// v0.9.6: bgm.js 背景音乐合成引擎（显式路由，防 Render 公网 404）
+app.get("/bgm.js", (req, res) => {
+  const filePath = path.join(__dirname, "bgm.js");
+  if (!fs.existsSync(filePath)) {
+    console.error("[静态资源] bgm.js 不存在:", filePath);
+    return res.status(404).send("bgm.js not found");
   }
   res.type("application/javascript");
   res.sendFile(filePath);
@@ -593,6 +605,7 @@ server.listen(PORT, "0.0.0.0", () => {
   console.log(`  __dirname: ${__dirname}`);
   console.log(`  online.js: ${fs.existsSync(path.join(__dirname, "online.js"))}`);
   console.log(`  game.js: ${fs.existsSync(path.join(__dirname, "game.js"))}`);
+  console.log(`  bgm.js: ${fs.existsSync(path.join(__dirname, "bgm.js"))}`);
   console.log(`  style.css: ${fs.existsSync(path.join(__dirname, "style.css"))}`);
   console.log(`  cards.json: ${fs.existsSync(path.join(__dirname, "cards.json"))}`);
   try {

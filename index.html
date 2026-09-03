@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="style.css">
   <script src="/socket.io/socket.io.js" defer></script>
   <script src="online.js" defer></script>
+  <script src="bgm.js" defer></script>
   <script src="game.js" defer></script>
 </head>
 <body class="card-size-medium">
@@ -31,6 +32,10 @@
           <option value="medium" selected>中</option>
           <option value="large">大</option>
         </select>
+      </div>
+      <div class="bgm-controls">
+        <button id="bgmToggleButton" class="ghost top-btn" type="button" title="背景音乐开关" aria-pressed="true">♪ 音乐</button>
+        <input id="bgmVolumeRange" class="bgm-volume" type="range" min="0" max="100" value="45" title="音乐音量" aria-label="音乐音量">
       </div>
       <button id="toggleAIPauseButton" class="ghost top-btn hidden" type="button">暂停 AI</button>
       <button id="aiStepButton" class="ghost top-btn hidden" type="button">AI 单步</button>
