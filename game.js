@@ -5473,4 +5473,87 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
       getTokenThumbnailPath
     };
   }
+
+  // =============================
+  // v0.9.8: 鼠标悬停放大卡牌（浮层预览，不破坏现有布局）
+  // 仅浏览器环境运行；click 仍触发 openCardPreview 模态，hover 仅作快速预览
+  // =============================
+  if (!__isNode) {
+    let hoverPreviewEl = null;
+    let hoverPreviewTimer = null;
+    let hoverPreviewCurrentCard = null;
+
+    function showCardHoverPreview(card, evt) {
+      clearTimeout(hoverPreviewTimer);
+      hoverPreviewCurrentCard = card;
+      // 150ms 延迟，避免鼠标快速划过闪烁
+      hoverPreviewTimer = setTimeout(function () {
+        if (!hoverPreviewCurrentCard) return;
+        const img = hoverPreviewCurrentCard.querySelector(".card-image");
+        if (!img) return;
+        const src = img.getAttribute("src") || "";
+        if (!src || src.startsWith("data:")) return;
+        if (!hoverPreviewEl) {
+          hoverPreviewEl = document.createElement("div");
+          hoverPreviewEl.className = "card-hover-preview";
+          document.body.appendChild(hoverPreviewEl);
+        }
+        hoverPreviewEl.innerHTML = '<img src="' + src + '" alt="" loading="eager" decoding="sync">';
+        moveCardHoverPreview(evt);
+        hoverPreviewEl.style.display = "block";
+      }, 150);
+    }
+
+    function moveCardHoverPreview(evt) {
+      if (!hoverPreviewEl || hoverPreviewEl.style.display === "none") return;
+      const w = hoverPreviewEl.offsetWidth || 280;
+      const h = hoverPreviewEl.offsetHeight || 400;
+      const margin = 16;
+      let x = evt.clientX + 20;
+      let y = evt.clientY + 20;
+      if (x + w + margin > window.innerWidth) x = evt.clientX - w - 20;
+      if (y + h + margin > window.innerHeight) y = evt.clientY - h - 20;
+      if (x < 8) x = 8;
+      if (y < 8) y = 8;
+      hoverPreviewEl.style.left = x + "px";
+      hoverPreviewEl.style.top = y + "px";
+    }
+
+    function hideCardHoverPreview() {
+      clearTimeout(hoverPreviewTimer);
+      hoverPreviewCurrentCard = null;
+      if (hoverPreviewEl) hoverPreviewEl.style.display = "none";
+    }
+
+    function setupCardHoverPreview() {
+      if (document.body.dataset.hoverPreviewBound) return;
+      document.body.dataset.hoverPreviewBound = "1";
+      document.body.addEventListener("mouseover", function (e) {
+        const card = e.target.closest(".card");
+        if (!card) return;
+        showCardHoverPreview(card, e);
+      });
+      document.body.addEventListener("mouseout", function (e) {
+        const card = e.target.closest(".card");
+        if (!card) return;
+        const related = e.relatedTarget;
+        // 在 card 子元素间移动不算离开，避免闪烁
+        if (related && card.contains(related)) return;
+        hideCardHoverPreview();
+      });
+      document.body.addEventListener("mousemove", function (e) {
+        if (!hoverPreviewEl || hoverPreviewEl.style.display === "none") return;
+        moveCardHoverPreview(e);
+      });
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape") hideCardHoverPreview();
+      });
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", setupCardHoverPreview);
+    } else {
+      setupCardHoverPreview();
+    }
+  }
 })();

@@ -2842,3 +2842,41 @@ body.mobile-portrait::before {
   }
 }
 
+/* ============ v0.9.8: 鼠标悬停放大卡牌（浮层预览，不动现有布局） ============ */
+.card-hover-preview {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  background: #fff;
+  border: 2px solid var(--accent);
+  border-radius: 8px;
+  padding: 6px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  display: none;
+  max-width: 320px;
+}
+
+.card-hover-preview img {
+  display: block;
+  width: 280px;
+  max-height: 420px;
+  object-fit: contain;
+  border-radius: 4px;
+  background: #eef2f1;
+}
+
+/* 触摸设备无 hover：禁用浮层预览，避免与触摸事件冲突 */
+@media (hover: none) {
+  .card-hover-preview {
+    display: none !important;
+  }
+}
+
+/* 极窄屏：缩小预览图，避免遮挡视口 */
+@media (max-width: 480px) {
+  .card-hover-preview img {
+    width: 200px;
+    max-height: 300px;
+  }
+}
+
