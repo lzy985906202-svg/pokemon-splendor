@@ -3535,32 +3535,30 @@
       await test("测试149：v0.9.2 — 不同名不能抢占断线座位（findReconnectSeat 不匹配返回 -1）", function () {
         var api2 = getAPI();
         var players = [
-          { name: "刘志远", connected: true, isAI: false },
-          { name: "朋友A", connected: false, isAI: false } // 断线，原名为 朋友A
+          { name: "刘志远", connected: true, isAI: false, playerToken: "abc" },
+          { name: "朋友A", connected: false, isAI: false, playerToken: "xyz" } // 断线，但已有 playerToken（被占用，不算空）
         ];
-        // 用不同名重连 → 不匹配
+        // 用不同名重连 → 不匹配（findReconnectSeat 仍按名匹配；同名匹配非本次断言核心）
         var seat = api2.findReconnectSeat(players, "另一个人");
         assertEqual(seat, -1, "不同名不能匹配断线座位，应返回 -1");
-        // findEmptySeat 也不应把断线且已有名字的座位视为空位（因 connected=false 但 isAI=false）
-        // 注意：findEmptySeat 返回 !connected && !isAI，断线座位满足此条件；
-        // 服务器仅在 waiting 状态使用 findEmptySeat，游戏开始后用 findReconnectSeat，因此不会抢占
+        // v0.9.11: findEmptySeat 以 playerToken == null 判定空位；断线但有 playerToken 的 seat 不算空位 → 应返回 -1
         var empty = api2.findEmptySeat(players);
-        assertEqual(empty, 1, "findEmptySeat 返回第一个未连接非 AI 座位（仅用于 waiting 状态填充）");
+        assertEqual(empty, -1, "v0.9.11 findEmptySeat：有 playerToken 的断线座位不再算作空座位");
       });
 
       await test("测试150：v0.9.2 — findEmptySeat 找到空座位；AI 座位不被视为空", function () {
         var api2 = getAPI();
         var players = [
-          { name: "刘志远", connected: true, isAI: false },
-          { name: "", connected: false, isAI: false }, // 空座位
-          { name: "AI 3", connected: true, isAI: true }
+          { name: "刘志远", connected: true, isAI: false, playerToken: "a-token" },
+          { name: "", connected: false, isAI: false, playerToken: null }, // 空座位（无 token）
+          { name: "AI 3", connected: true, isAI: true, playerToken: null }
         ];
         var empty = api2.findEmptySeat(players);
-        assertEqual(empty, 1, "应返回空座位索引 1");
-        // 全部已连接
+        assertEqual(empty, 1, "应返回空座位索引 1（唯一非 AI 且无 playerToken）");
+        // 全部已入座（都有 playerToken）
         var players2 = [
-          { name: "A", connected: true, isAI: false },
-          { name: "B", connected: true, isAI: false }
+          { name: "A", connected: true, isAI: false, playerToken: "t1" },
+          { name: "B", connected: true, isAI: false, playerToken: "t2" }
         ];
         assertEqual(api2.findEmptySeat(players2), -1, "无空座位应返回 -1");
       });

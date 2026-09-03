@@ -452,7 +452,9 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
   // v0.9.2 查找空座位（未连接且非 AI），找不到返回 -1
   function findEmptySeat(players) {
     if (!Array.isArray(players)) return -1;
-    return players.findIndex((p) => p && !p.connected && !p.isAI);
+    // v0.9.11：空位 = 没有稳定 playerToken 且不是 AI
+    // 注意：connected=false（临时断线）的玩家仍然"有人占用"，不能被当作空seat覆盖
+    return players.findIndex((p) => p && !p.isAI && (p.playerToken == null || p.playerToken === ""));
   }
 
   function resolvePlayerIndex(playerRef) {
@@ -4692,10 +4694,8 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
           if (!window.__pokemonOnline) { notify("联机模块未加载", "error"); return; }
           window.__pokemonOnline.connect();
           const res = await window.__pokemonOnline.createRoom(name, pc, ac);
-          showOnlineLobby(res.roomCode, res.room, 0);
-          // v0.9.9: 保存会话供刷新后自动重连 + 同步 URL
-          saveOnlineSession(res.roomCode, name);
-          updateRoomUrl(res.roomCode);
+          // v0.9.11: playerToken + roomCode 已在 online.js _applyOnlineResult 中保存
+          // onRoomCreated callback 会统一调用 applyOnlineResumeResult 进入 LOBBY
         } catch (e) {
           notify(`创建房间失败：${e.message}`, "error");
         }
@@ -4710,12 +4710,9 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
         if (els.onlineRoomCode) els.onlineRoomCode.value = code;
         try {
           if (!window.__pokemonOnline) { notify("联机模块未加载", "error"); return; }
-          await window.__pokemonOnline.connect();
+          window.__pokemonOnline.connect();
           const res = await window.__pokemonOnline.joinRoom(code, name);
-          showOnlineLobby(res.roomCode, res.room, res.seatIndex);
-          // v0.9.9: 保存会话供刷新后自动重连 + 同步 URL
-          saveOnlineSession(res.roomCode, name);
-          updateRoomUrl(res.roomCode);
+          // onRoomJoined callback → applyOnlineResumeResult → LOBBY
         } catch (e) {
           notify(`加入房间失败：${e.message}`, "error");
         }
@@ -4725,9 +4722,16 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
     if (els.startOnlineGameButton) {
       els.startOnlineGameButton.addEventListener("click", async () => {
         try {
-          const roomCode = els.lobbyRoomCode?.textContent || "";
+          const roomCode = onlineRoomCode || (els.lobbyRoomCode?.textContent || "");
           if (!window.__pokemonOnline) return;
           await window.__pokemonOnline.startOnlineGame(roomCode);
+          // 服务器广播 stateUpdated 后客户端 setOnlineState + render
+          // 这里再主动把界面切到 game（避免首次进入游戏界面显示问题）
+          if (els.startScreen) els.startScreen.classList.add("hidden");
+          if (els.onlineLobby) els.onlineLobby.classList.add("hidden");
+          if (els.onlinePanel) els.onlinePanel.classList.add("hidden");
+          if (els.gameScreen) els.gameScreen.classList.remove("hidden");
+          render();
         } catch (e) {
           notify(`开始游戏失败：${e.message}`, "error");
         }
@@ -4735,13 +4739,25 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
     }
 
     if (els.leaveRoomButton) {
-      els.leaveRoomButton.addEventListener("click", () => {
-        if (window.__pokemonOnline) window.__pokemonOnline.disconnect();
-        clearOnlineMode();
-        // v0.9.9: 用户主动离开 → 清除保存的会话，避免下次刷新又自动重连
-        clearOnlineSession();
+      els.leaveRoomButton.addEventListener("click", async () => {
+        try {
+          if (window.__pokemonOnline) await window.__pokemonOnline.leaveRoom();
+          else {
+            clearOnlineMode();
+            clearOnlineSession();
+          }
+        } catch (e) { /* noop */ }
+        if (els.gameScreen) els.gameScreen.classList.add("hidden");
         if (els.onlineLobby) els.onlineLobby.classList.add("hidden");
         if (els.onlinePanel) els.onlinePanel.classList.remove("hidden");
+        if (els.modeLocalBtn && els.modeOnlineBtn) {
+          // 保持联机模式，但显示 create/join 表单
+        }
+        try {
+          const url = new URL(window.location.href);
+          url.searchParams.delete("room");
+          window.history.replaceState({}, "", url.toString());
+        } catch (e) { /* noop */ }
         notify("已离开房间。", "info");
       });
     }
@@ -4774,28 +4790,8 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
         }
       });
     }
-
-    // 注册联机回调
-    if (window.__pokemonOnline) {
-      window.__pokemonOnline.setCallbacks({
-        onRoomUpdated: (data) => {
-          const roomCode = els.lobbyRoomCode?.textContent || "";
-          if (roomCode && data && data.room) {
-            const isHost = data.room.hostSeatIndex === getAPISeatIndex();
-            renderLobbyPlayers(data.room, isHost, getAPISeatIndex());
-          }
-        },
-        onActionRejected: (data) => {
-          if (data && data.message) notify(data.message, "warn");
-        },
-        onPlayerDisconnected: (data) => {
-          if (data && data.name) notify(`${data.name} 掉线了。`, "warn");
-        },
-        onConnectionError: () => {
-          notify("无法连接服务器，请确认房主电脑已运行 npm start，且双方在同一 WiFi。", "error");
-        }
-      });
-    }
+    // v0.9.11: 联机回调（onResumed / onResumeFailed / onRoomCreated / onRoomJoined 等）
+    // 已在 boot() 中统一通过 __pokemonOnline.setCallbacks 注册；此处不再重复注册，避免覆盖统一 applyOnlineResumeResult 逻辑
   }
 
   function getAPISeatIndex() {
@@ -4952,31 +4948,34 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
   }
 
   // v0.9.2 解析 URL ?room=房间号：切换到联机模式、填入房间号、光标定位到名称输入框
-  // v0.9.9: 联机会话本地持久化（刷新后静默自动重连）
+  // v0.9.11: 联机会话本地持久化（roomCode + playerToken；刷新后走 resumeRoom 权威恢复）
   const ONLINE_SESSION_KEY = "pokemonSplendorOnlineSession.v1";
 
-  function saveOnlineSession(roomCode, playerName) {
+  function saveOnlineSession({ roomCode, playerToken, playerName }) {
+    if (!roomCode || !playerToken) return;
     try {
+      const prev = JSON.parse(localStorage.getItem(ONLINE_SESSION_KEY) || "null");
       localStorage.setItem(ONLINE_SESSION_KEY, JSON.stringify({
-        roomCode: roomCode,
-        playerName: playerName,
+        roomCode: String(roomCode).toUpperCase(),
+        playerToken: String(playerToken),
+        playerName: playerName || (prev && prev.playerName) || "",
         savedAt: Date.now()
       }));
-    } catch (e) { /* localStorage 不可用时静默降级 */ }
+    } catch (e) { /* noop */ }
   }
 
   function loadOnlineSession() {
     try {
       const raw = localStorage.getItem(ONLINE_SESSION_KEY);
       if (!raw) return null;
-      const data = JSON.parse(raw);
-      if (!data || !data.roomCode || !data.playerName) return null;
-      // 7 天过期，避免陈旧会话总是触发"重连失败"通知
-      if (data.savedAt && Date.now() - data.savedAt > 7 * 24 * 60 * 60 * 1000) {
+      const d = JSON.parse(raw);
+      // v0.9.11: 必须同时存在 roomCode + playerToken 才视为有效会话（playerName 仅作 UI 显示）
+      if (!d || !d.roomCode || !d.playerToken) return null;
+      if (d.savedAt && Date.now() - d.savedAt > 7 * 24 * 60 * 60 * 1000) {
         localStorage.removeItem(ONLINE_SESSION_KEY);
         return null;
       }
-      return data;
+      return d;
     } catch (e) { return null; }
   }
 
@@ -4994,24 +4993,90 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
     } catch (e) { /* noop */ }
   }
 
-  // v0.9.9: URL 带 ?room= 且本地存了玩家名时，刷新后静默自动重连到原房间
+  // v0.9.11: 刷新/重连后统一 applyOnlineResumeResult(res) 决策 LOBBY / GAME
+  //   res: {ok:true, roomCode, seatIndex, isHost, playerToken, playerName, room, gameStarted, gameState}
+  // 原则：gameStarted=true 或 gameState 有效 → 进入 GAME；否则进入 LOBBY。禁止被其他 callback 二次覆盖。
+  // 注意：setOnlineMode + setOnlineState 在 online.js 的 _applyOnlineResult 中已经执行；此处仅负责 UI 路由（LOBBY vs GAME）。
+  function applyOnlineResumeResult(res) {
+    if (!res || !res.ok) return;
+    const roomCode = res.roomCode;
+    const seatIndex = res.seatIndex;
+    updateRoomUrl(roomCode);
+    const isGame = res.gameStarted === true || !!res.gameState;
+    if (isGame) {
+      // v0.9.11: 游戏中 → 直接切换到游戏画面，绝对禁止再调 showOnlineLobby
+      if (els.onlinePanel) els.onlinePanel.classList.add("hidden");
+      if (els.onlineLobby) els.onlineLobby.classList.add("hidden");
+      if (els.startScreen) els.startScreen.classList.add("hidden");
+      if (els.gameScreen) els.gameScreen.classList.remove("hidden");
+      // 如果服务器携带 gameState，确保渲染（online.js _applyOnlineResult 已调用 setOnlineState，这里再 render 一次防遗漏）
+      if (res.gameState) {
+        try {
+          gameState = hydrateGameState(res.gameState);
+          historyStack = [];
+          pendingTokenSelection = [];
+        } catch (e) { /* noop */ }
+      }
+      render();
+      updateLandscapeHint();
+    } else {
+      // waiting 状态 → 进入 Lobby（但不再回 create/join 初始界面）
+      showOnlineLobby(roomCode, res.room || sanitizeLobbyFromSeat(seatIndex), seatIndex);
+    }
+  }
+
+  function sanitizeLobbyFromSeat(seatIndex) {
+    // 兜底：room 缺失时，基于 onlineSeatIndex 和 onlineRoomCode 输出最小结构
+    return {
+      roomCode: onlineRoomCode,
+      players: (Array(Number(onlineMode ? onlineState : 2)).fill(null).map((_,i)=>({
+        name: i===seatIndex ? (gameState?.players?.[i]?.name || "") : "",
+        connected: i===seatIndex,
+        seatIndex: i,
+        isAI: false
+      }))),
+      hostSeatIndex: onlineIsHost === true ? seatIndex : 0
+    };
+  }
+
+  // v0.9.11: resume 失败（ROOM_NOT_FOUND / INVALID_PLAYER_TOKEN）→ 清理 session + 回初始联机界面
+  function handleResumeFailed(code, message) {
+    clearOnlineSession();
+    // 清 online 状态（避免残留旧 roomCode 误导）
+    if (typeof clearOnlineMode === "function") clearOnlineMode();
+    // 回初始界面：显示 create/join 面板，隐藏 lobby 和 game
+    if (els.gameScreen) els.gameScreen.classList.add("hidden");
+    if (els.onlineLobby) els.onlineLobby.classList.add("hidden");
+    if (els.onlinePanel) els.onlinePanel.classList.remove("hidden");
+    if (els.modeOnlineBtn && els.modeLocalBtn) {
+      // 保持在联机模式 tab（用户是联机意图才会失败到这）
+    }
+    if (code === "ROOM_NOT_FOUND") {
+      notify("房间已不存在（服务器重启或房间过期），已自动清理本地会话。", "warn");
+    } else if (code === "INVALID_PLAYER_TOKEN") {
+      notify("本地凭证已失效，请重新创建/加入房间。", "warn");
+    } else {
+      notify("恢复房间失败：" + (message || code || "未知错误"), "warn");
+    }
+  }
+
+  // v0.9.11: 取消旧的 silentRejoinRoom（走 playerName），统一改为 resumeRoom + applyOnlineResumeResult
   async function silentRejoinRoom(roomCode, playerName) {
+    // 仅保留函数名兼容旧代码调用；实际恢复统一走 __pokemonOnline.resumeRoom
     try {
       if (!window.__pokemonOnline) return;
-      await window.__pokemonOnline.connect();
-      const res = await window.__pokemonOnline.joinRoom(roomCode, playerName);
-      // P1-5 修复：只有游戏未开始（res.gameState 不存在）时才显示大厅
-      // 游戏进行中时 setOnlineState 已在 joinRoom 内部被调用恢复游戏 UI，不能再调 showOnlineLobby 覆盖
-      if (!res || !res.gameState) {
-        showOnlineLobby(res.roomCode, res.room, res.seatIndex);
+      window.__pokemonOnline.connect();
+      // 本地如果已经有 session（roomCode + playerToken），直接 resume；否则没法恢复
+      const sess = loadOnlineSession();
+      if (!sess || sess.roomCode !== String(roomCode || "").toUpperCase()) {
+        // 没有 token，无法恢复
+        throw new Error("缺少 playerToken，无法自动恢复房间。请重新输入玩家名加入。");
       }
+      const res = await window.__pokemonOnline.resumeRoom(sess.roomCode, sess.playerToken);
+      // applyOnlineResumeResult 由 onResumed callback 统一调用，不需要在此重复
     } catch (e) {
-      // 重连失败：清除本地会话，避免下次还失败；显示错误并聚焦玩家名输入框
-      clearOnlineSession();
       notify("自动重连失败：" + e.message + "。请重新输入玩家名加入。", "warn");
-      if (els.onlineJoinName) {
-        try { els.onlineJoinName.focus(); } catch (e2) { /* noop */ }
-      }
+      if (els.onlineJoinName) { try { els.onlineJoinName.focus(); } catch (e2) { /* noop */ } }
     }
   }
 
@@ -5188,19 +5253,11 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
     cacheElements();
     bindEvents();
     notify("正在读取卡牌数据...", "info");
-    // P1-1 修复：联机刷新时跳过单机存档加载，避免短暂渲染单机画面造成 localStorage 冲突
+    // v0.9.11: 只要存在 roomCode + playerToken 会话，就视为联机刷新恢复，跳过单机存档加载
+    // （如果 resume 最终失败，handleResumeFailed 会清 session，用户可以手动开始单机或重新联机）
     let skipLocalSave = false;
-    try {
-      const params = new URLSearchParams(window.location.search);
-      const urlRoom = params.get("room");
-      const sessionRaw = localStorage.getItem(ONLINE_SESSION_KEY);
-      if (urlRoom && sessionRaw) {
-        const session = JSON.parse(sessionRaw);
-        if (session && session.roomCode === urlRoom.toUpperCase() && session.playerName) {
-          skipLocalSave = true;
-        }
-      }
-    } catch (e) { /* noop */ }
+    const savedSession = loadOnlineSession();
+    if (savedSession) skipLocalSave = true;
     const saved = skipLocalSave ? null : loadSavedGame();
     try {
       await loadCardDataAutomatically();
@@ -5221,7 +5278,50 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
     render();
     maybeShowFirstTimeTip();
     updateLandscapeHint();
-    // v0.9.2 URL ?room=房间号 自动切换联机模式并填入房间号
+    // v0.9.11: 先注册 onResumed callback，再 applyRoomCodeFromUrl / resume
+    // 保证 applyOnlineResumeResult 在 resume 返回前已准备好
+    (function setupOnlineOnce(){
+      if (!window.__pokemonOnline || window.__pokemonOnline._v0911CallbacksInstalled) return;
+      try {
+        const oldCb = window.__pokemonOnline.getCallbacks ? window.__pokemonOnline.getCallbacks() : null;
+        window.__pokemonOnline.setCallbacks({
+          onResumed: (res) => applyOnlineResumeResult(res),
+          onResumeFailed: (code, message) => handleResumeFailed(code, message),
+          onRoomCreated: (res) => applyOnlineResumeResult(res),  // createRoom 成功也走统一路由
+          onRoomJoined: (res) => applyOnlineResumeResult(res),   // joinRoom 成功也走统一路由
+          onRoomUpdated: (data) => {
+            const roomCode = onlineRoomCode || (els.lobbyRoomCode?.textContent || "");
+            if (roomCode && data && data.room) {
+              const seat = getAPISeatIndex();
+              const isHost = onlineIsHost === true || (data.room.hostSeatIndex === seat);
+              // 只有在 lobby 可见时更新列表；游戏进行中 roomUpdated 广播不切界面
+              if (els.onlineLobby && !els.onlineLobby.classList.contains("hidden")) {
+                renderLobbyPlayers(data.room, isHost, seat);
+              }
+            }
+          },
+          onActionRejected: (data) => { if (data?.message) notify(data.message, "warn"); },
+          onPlayerDisconnected: (data) => { if (data?.name) notify(`${data.name} 掉线了。`, "warn"); },
+          onPlayerReconnected: (data) => { if (data?.name) notify(`${data.name} 重新连接。`, "info"); },
+          onConnectionError: () => {
+            notify("无法连接服务器，请确认服务器已运行 npm start。", "error");
+          }
+        });
+        window.__pokemonOnline._v0911CallbacksInstalled = true;
+      } catch (e) { /* noop */ }
+    })();
+    // v0.9.11: 有本地 session → 直接 resume（同时也会走 applyRoomCodeFromUrl 处理 URL ?room= 用于 UI 预填）
+    if (savedSession) {
+      try {
+        if (!window.__pokemonOnline) throw new Error("联机模块未加载");
+        window.__pokemonOnline.connect();
+        // v0.9.11: 用本地 playerToken 做权威 resume；applyOnlineResumeResult 由 callback 统一触发
+        window.__pokemonOnline.resumeRoom(savedSession.roomCode, savedSession.playerToken);
+      } catch (e) {
+        notify("自动恢复房间失败：" + e.message, "warn");
+      }
+    }
+    // URL ?room= 同步（即便已在恢复，也需切联机 tab、填房间号）
     try { applyRoomCodeFromUrl(); } catch (e) { /* noop */ }
     try {
       window.addEventListener("resize", updateLandscapeHint);
@@ -5249,9 +5349,9 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
       notify("联机未连接，无法发送行动。", "error");
       return;
     }
+    // v0.9.11: 绝不发送 seatIndex/playerIndex（服务端根据 socket.id → socketToMember 反向映射权威获取身份）
     onlineSocket.emit("playerAction", {
       roomCode: onlineRoomCode,
-      seatIndex: onlineSeatIndex,
       action
     });
   }

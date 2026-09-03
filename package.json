@@ -1,6 +1,6 @@
 {
   "name": "pokemon-splendor",
-  "version": "0.9.4",
+  "version": "0.9.11",
   "description": "宝可梦璀璨宝石桌游 - 单机 + 局域网联机 + Render 公网部署",
   "private": true,
   "engines": {
