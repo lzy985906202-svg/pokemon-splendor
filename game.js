@@ -5000,8 +5000,11 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
       if (!window.__pokemonOnline) return;
       await window.__pokemonOnline.connect();
       const res = await window.__pokemonOnline.joinRoom(roomCode, playerName);
-      showOnlineLobby(res.roomCode, res.room, res.seatIndex);
-      // setOnlineState 已在 joinRoom 内部被调用（res.gameState 存在时），自动恢复游戏进行中状态
+      // P1-5 修复：只有游戏未开始（res.gameState 不存在）时才显示大厅
+      // 游戏进行中时 setOnlineState 已在 joinRoom 内部被调用恢复游戏 UI，不能再调 showOnlineLobby 覆盖
+      if (!res || !res.gameState) {
+        showOnlineLobby(res.roomCode, res.room, res.seatIndex);
+      }
     } catch (e) {
       // 重连失败：清除本地会话，避免下次还失败；显示错误并聚焦玩家名输入框
       clearOnlineSession();
