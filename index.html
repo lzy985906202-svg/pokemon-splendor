@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>宝可梦璀璨宝石桌游 v0.9.3</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="game.js" defer></script>
+  <script src="online.js" defer></script>
+</head>
+<body class="card-size-medium">
+
+  <!-- ============ TOP BAR ============ -->
+  <header class="top-bar">
+    <div class="top-left">
+      <h1 class="game-title">宝可梦璀璨宝石</h1>
+      <span id="cardDataStatus" class="card-data-status">正在读取卡牌数据...</span>
+    </div>
+    <div class="top-center">
+      <span id="roomBadge" class="room-badge">单机模式</span>
+      <span id="topCurrentPlayer" class="top-current">等待开始</span>
+      <span id="phaseBadge" class="phase-badge">—</span>
+      <span id="turnLine" class="turn-badge">第 — 轮</span>
+    </div>
+    <div class="top-right">
+      <div class="card-size-controls">
+        <label for="cardSizeSelect">卡牌大小</label>
+        <select id="cardSizeSelect">
+          <option value="small">小</option>
+          <option value="medium" selected>中</option>
+          <option value="large">大</option>
+        </select>
+      </div>
+      <button id="toggleAIPauseButton" class="ghost top-btn hidden" type="button">暂停 AI</button>
+      <button id="aiStepButton" class="ghost top-btn hidden" type="button">AI 单步</button>
+      <div id="aiSpeedRow" class="inline-control hidden">
+        <label for="aiSpeedSelect">AI 速度</label>
+        <select id="aiSpeedSelect">
+          <option value="slow">慢</option>
+          <option value="normal" selected>正常</option>
+          <option value="fast">快</option>
+        </select>
+      </div>
+      <button id="rulesButton" class="ghost top-btn" type="button">规则说明</button>
+      <button id="undoButton" class="ghost top-btn" type="button">撤销</button>
+      <button id="restartButton" class="danger ghost top-btn" type="button">重新开始</button>
+    </div>
+  </header>
+
+  <main class="app-shell">
+
+    <!-- ============ MESSAGE BAR ============ -->
+    <div id="messageBar" class="message" role="status" aria-live="polite"></div>
+
+    <!-- ============ LOAD SCREEN ============ -->
+    <section id="loadScreen" class="panel">
+      <h2>卡牌数据</h2>
+      <p>自动读取失败时，请选择现有的 cards.json。</p>
+      <input id="cardFileInput" type="file" accept="application/json,.json">
+    </section>
+
+    <!-- ============ START SCREEN ============ -->
+    <section id="startScreen" class="panel">
+      <h2>开始游戏</h2>
+
+      <!-- 模式选择 -->
+      <div class="mode-select">
+        <button id="modeLocalBtn" class="mode-btn active" type="button">单机模式</button>
+        <button id="modeOnlineBtn" class="mode-btn" type="button">联机模式</button>
+        <button id="howToConnectButton" class="mode-btn ghost" type="button" title="局域网联机步骤说明">如何联机？</button>
+      </div>
+
+      <!-- 单机模式面板 -->
+      <div id="localPanel" class="start-controls">
+        <label for="playerCount">玩家人数</label>
+        <select id="playerCount">
+          <option value="2">2 人</option>
+          <option value="3">3 人</option>
+          <option value="4">4 人</option>
+        </select>
+        <label for="aiCount">AI 玩家数量</label>
+        <select id="aiCount">
+          <option value="0">0 个 AI</option>
+          <option value="1">1 个 AI</option>
+          <option value="2">2 个 AI</option>
+          <option value="3">3 个 AI</option>
+          <option value="4">4 个 AI（观战）</option>
+        </select>
+        <button id="startButton" type="button">开始游戏</button>
+      </div>
+
+      <!-- 联机模式面板 -->
+      <div id="onlinePanel" class="start-controls hidden">
+        <div class="online-section">
+          <h3>创建房间</h3>
+          <input id="onlineCreateName" type="text" placeholder="你的名称" maxlength="12">
+          <label for="onlinePlayerCount">玩家人数</label>
+          <select id="onlinePlayerCount">
+            <option value="2">2 人</option>
+            <option value="3">3 人</option>
+            <option value="4">4 人</option>
+          </select>
+          <label for="onlineAICount">AI 数量</label>
+          <select id="onlineAICount">
+            <option value="0">0 个 AI</option>
+            <option value="1">1 个 AI</option>
+            <option value="2">2 个 AI</option>
+            <option value="3">3 个 AI</option>
+          </select>
+          <button id="createRoomButton" type="button">创建房间</button>
+        </div>
+        <div class="online-section">
+          <h3>加入房间</h3>
+          <input id="onlineJoinName" type="text" placeholder="你的名称" maxlength="12">
+          <input id="onlineRoomCode" type="text" placeholder="房间号" maxlength="4" style="text-transform:uppercase">
+          <button id="joinRoomButton" type="button">加入房间</button>
+        </div>
+      </div>
+
+      <!-- 联机房间等待大厅 -->
+      <div id="onlineLobby" class="online-lobby hidden">
+        <h3>房间大厅</h3>
+        <div class="lobby-room-code">房间号：<span id="lobbyRoomCode" class="room-code-display">----</span></div>
+        <div class="lobby-join-info">
+          <div id="lobbyJoinAddress" class="lobby-join-address">加入地址：—</div>
+          <div id="lobbyLanHint" class="lobby-lan-hint muted"></div>
+          <div class="lobby-copy-buttons">
+            <button id="lobbyCopyRoomCodeButton" type="button" class="ghost">复制房间号</button>
+            <button id="lobbyCopyJoinLinkButton" type="button">复制加入链接</button>
+          </div>
+        </div>
+        <div id="lobbyPlayerList" class="lobby-player-list"></div>
+        <div class="lobby-controls">
+          <button id="startOnlineGameButton" type="button" class="hidden">开始游戏</button>
+          <button id="leaveRoomButton" type="button" class="ghost">离开房间</button>
+        </div>
+        <p id="lobbyStatus" class="muted"></p>
+      </div>
+    </section>
+
+    <!-- ============ GAME SCREEN (BGA-style TABLE LAYOUT) ============ -->
+    <section id="gameScreen" class="game-screen hidden">
+      <div id="spectatorNotice" class="spectator-notice hidden">观战模式：所有玩家均由 AI 控制。</div>
+
+      <div class="table-layout">
+
+        <!-- ============ LEFT: MAIN TABLE (公共区 + 供应区) ============ -->
+        <div class="main-table">
+
+          <!-- 公共区 -->
+          <section class="main-board panel">
+            <div class="board-header">
+              <h3>公共区</h3>
+            </div>
+            <div id="publicBoard" class="public-board"></div>
+          </section>
+
+        </div>
+
+        <!-- ============ SELECTED CARD PANEL (选中卡详情) ============ -->
+        <aside class="selected-card-panel panel">
+          <h3>选中卡</h3>
+          <div id="selectedCardInfo" class="selected-card-info">未选择</div>
+        </aside>
+
+        <!-- ============ SUPPLY COLUMN (竖排供应区) ============ -->
+        <aside class="supply-column panel">
+          <h3>供应区</h3>
+          <div id="supplyTokens" class="supply-list"></div>
+          <div id="pendingTokenHint" class="pending-token-hint"></div>
+          <div id="pendingTokenActions" class="pending-token-actions hidden">
+            <button id="confirmTokenSelectionButton" type="button">确认拿取</button>
+            <button id="clearTokenSelectionButton" type="button" class="ghost">清空</button>
+          </div>
+        </aside>
+
+        <!-- ============ RIGHT-MOST: PLAYERS SIDEBAR ============ -->
+        <aside class="players-sidebar panel">
+          <h3>玩家</h3>
+          <div id="playersSidebar" class="players-list"></div>
+        </aside>
+
+        <!-- ============ BOTTOM: CURRENT PLAYER AREA ============ -->
+        <div class="bottom-player-area panel">
+          <div class="bp-header">
+            <h3 id="currentPlayerName">当前玩家</h3>
+            <span id="phaseBadgeBottom" class="phase-badge">—</span>
+            <div id="scoreLine" class="score-line"></div>
+          </div>
+
+          <div class="bp-body">
+            <div class="bp-col">
+              <h4>我的 token</h4>
+              <div id="playerTokens" class="token-row"></div>
+            </div>
+            <div class="bp-col">
+              <h4>我的减免</h4>
+              <div id="playerDiscount" class="token-row"></div>
+            </div>
+            <div class="bp-col">
+              <h4>保留卡</h4>
+              <div id="reservedCards" class="mini-card-list"></div>
+            </div>
+            <div class="bp-col">
+              <h4>已捕捉</h4>
+              <div id="tableauCards" class="mini-card-list"></div>
+            </div>
+            <div class="bp-col">
+              <h4>进化记录</h4>
+              <div id="evolvedArchive" class="mini-card-list"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============ ACTION LOG ============ -->
+        <aside class="action-log panel">
+          <h3>行动日志</h3>
+          <div id="actionLogContent" class="action-log-content"></div>
+        </aside>
+
+      </div>
+
+      <!-- ============ LEGACY ACTION CONTROLS (隐藏保留旧 ID) ============ -->
+      <div class="legacy-action-controls hidden">
+        <fieldset id="takeThreeChoices" class="choice-grid"></fieldset>
+        <button id="takeThreeButton" type="button">拿 3 个不同球</button>
+        <select id="takeTwoColor"></select>
+        <button id="takeTwoButton" type="button">拿 2 个相同球</button>
+        <button id="reserveSelectedButton" type="button">保留选中卡</button>
+        <select id="blindDeck">
+          <option value="level1">1 级牌堆</option>
+          <option value="level2">2 级牌堆</option>
+          <option value="level3">3 级牌堆</option>
+        </select>
+        <button id="blindReserveButton" type="button">保留牌堆顶卡</button>
+        <button id="buySelectedButton" type="button">捕捉选中卡</button>
+        <div id="discardPanel" class="hidden">
+          <p id="discardHint" class="muted"></p>
+          <div id="discardButtons" class="button-row"></div>
+        </div>
+        <div id="evolveOptions" class="evolve-list"></div>
+        <button id="skipEvolutionButton" type="button">跳过进化 / 结束回合</button>
+      </div>
+    </section>
+
+    <!-- ============ FINAL SCREEN ============ -->
+    <section id="finalScreen" class="panel hidden">
+      <h2>最终排名</h2>
+      <div id="finalRanking"></div>
+    </section>
+
+    <!-- ============ DEBUG PANEL ============ -->
+    <details id="debugPanel" class="panel debug-panel hidden">
+      <summary>Debug 面板</summary>
+      <pre id="debugContent"></pre>
+      <div class="debug-tools">
+        <h3>测试工具区</h3>
+        <div class="debug-tool-row">
+          <label for="debugCardSelect">选择卡牌</label>
+          <select id="debugCardSelect"></select>
+        </div>
+        <div class="debug-tool-row">
+          <button id="debugAddToTableau" type="button">加入 tableau</button>
+          <button id="debugAddToReserved" type="button">加入 reserved</button>
+        </div>
+        <div class="debug-tool-row debug-token-btns">
+          <button id="debugTokenRed" type="button" class="token-btn red">精灵球 +1</button>
+          <button id="debugTokenBlue" type="button" class="token-btn blue">超级球 +1</button>
+          <button id="debugTokenBlack" type="button" class="token-btn black">高级球 +1</button>
+          <button id="debugTokenPink" type="button" class="token-btn pink">治愈球 +1</button>
+          <button id="debugTokenYellow" type="button" class="token-btn yellow">先机球 +1</button>
+          <button id="debugTokenPurple" type="button" class="token-btn purple">大师球 +1</button>
+        </div>
+        <div class="debug-tool-row">
+          <button id="debugClearTokens" type="button">当前玩家 token 清零</button>
+          <button id="debugAddManyTokens" type="button">普通球 +10 大师球 +5</button>
+          <button id="debugRefreshScore" type="button">强制刷新分数</button>
+        </div>
+        <div class="debug-tool-row">
+          <button id="debugClearPlayerCards" type="button">清空 tableau/reserved/evolvedArchive</button>
+          <button id="debugForceEvolve" type="button">强制进入进化阶段</button>
+          <button id="debugForceEndTurn" type="button">强制结束当前回合</button>
+        </div>
+        <div class="debug-tool-row">
+          <button id="debugClearStorage" type="button" class="danger">清空 localStorage 并重载</button>
+          <button id="debugClearCardCache" type="button">清除卡牌缓存</button>
+        </div>
+      </div>
+    </details>
+
+  </main>
+
+  <!-- ============ CARD PREVIEW MODAL ============ -->
+  <div id="cardPreviewModal" class="card-preview-modal hidden">
+    <div class="card-preview-backdrop" data-close-preview="true"></div>
+    <div class="card-preview-dialog">
+      <button id="closeCardPreviewButton" class="card-preview-close" type="button">×</button>
+      <div id="cardPreviewContent" class="card-preview-content"></div>
+    </div>
+  </div>
+
+  <!-- ============ RULES MODAL ============ -->
+  <div id="rulesModal" class="rules-modal hidden">
+    <div class="rules-backdrop" data-close-rules="true"></div>
+    <div class="rules-dialog">
+      <button id="closeRulesButton" class="rules-close" type="button">×</button>
+      <div class="rules-content">
+        <h2>规则说明</h2>
+        <section>
+          <h3>游戏目标</h3>
+          <p>捕捉宝可梦、获得分数和减免球。任意玩家达到 18 分后触发最终轮，最终分数最高者获胜。</p>
+        </section>
+        <section>
+          <h3>每回合选择 1 个主要行动</h3>
+          <ol>
+            <li>拿 3 个不同普通球。若供应区只剩 2 种普通球可选，仍拿 3 个球，其中一种颜色拿 2 个，另一种颜色拿 1 个；不能拿大师球。</li>
+            <li>拿 2 个相同普通球，但该颜色供应区拿取前至少有 4 个。</li>
+            <li>保留一张 1/2/3 级卡，或从 1/2/3 级牌堆顶保留一张卡，并获得 1 个大师球。</li>
+            <li>捕捉公共区或自己保留区中的一张宝可梦卡。</li>
+          </ol>
+        </section>
+        <section>
+          <h3>捕捉与减免</h3>
+          <p>捕捉需要支付卡牌上的费用。你已经捕捉的宝可梦会提供减免球，能永久抵扣对应颜色费用。大师球可以代替任意普通球。</p>
+        </section>
+        <section>
+          <h3>进化规则</h3>
+          <p>完成主要行动后，回合结束前可以进化 1 次。进化不消耗手里的 token，而是检查你面前已经捕捉宝可梦提供的减免球。旧卡进入进化记录，不再提供分数和减免。</p>
+        </section>
+        <section>
+          <h3>token 上限</h3>
+          <p>回合结束时最多保留 10 个 token，包括大师球。超过时必须丢弃到 10 个以内。</p>
+        </section>
+        <section>
+          <h3>高亮说明</h3>
+          <ul>
+            <li>绿色边框：当前可以捕捉。</li>
+            <li>灰色半透明：当前暂时买不起。</li>
+            <li>金色边框：当前可作为进化目标。</li>
+            <li>紫色边框：当前可作为进化基础。</li>
+            <li>蓝绿色边框：当前选中的卡。</li>
+          </ul>
+        </section>
+        <section>
+          <h3>球颜色对应</h3>
+          <ul>
+            <li>红色：精灵球</li>
+            <li>蓝色：超级球</li>
+            <li>黑色：高级球</li>
+            <li>粉色：治愈球</li>
+            <li>黄色：先机球 / 速度球</li>
+            <li>紫色：大师球</li>
+          </ul>
+        </section>
+        <section>
+          <h3>平局规则</h3>
+          <p>若分数相同，进化记录更多者获胜；若仍相同，正面宝可梦数量更多者获胜。</p>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ HOW TO CONNECT MODAL ============ -->
+  <div id="howToConnectModal" class="rules-modal hidden">
+    <div class="rules-backdrop" data-close-how-to="true"></div>
+    <div class="rules-dialog">
+      <button id="closeHowToConnectButton" class="rules-close" type="button">×</button>
+      <div class="rules-content">
+        <h2>如何联机？（局域网）</h2>
+        <p class="muted">这只是局域网联机。如果朋友不在同一个网络，需要后续做公网部署。</p>
+        <ol>
+          <li>房主电脑运行 <code>npm start</code>；</li>
+          <li>房主打开 <code>http://localhost:3000</code>；</li>
+          <li>创建房间；</li>
+          <li>把加入链接发给朋友；</li>
+          <li>朋友手机/电脑必须和房主在同一个 WiFi；</li>
+          <li>如果打不开，请检查 Windows 防火墙是否允许 Node.js 访问网络；</li>
+          <li>朋友进入后输入名字并加入房间；</li>
+          <li>房主点击开始游戏。</li>
+        </ol>
+        <p>房间号可在房主界面点击「复制房间号」复制，加入链接可点击「复制加入链接」复制后发给朋友。</p>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

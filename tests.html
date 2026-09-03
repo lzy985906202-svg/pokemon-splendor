@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>宝可梦璀璨宝石 - 自动测试</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+      line-height: 1.5;
+      padding: 20px;
+    }
+    h1 { color: #e94560; margin-bottom: 4px; }
+    .summary {
+      display: flex;
+      gap: 16px;
+      margin: 12px 0 20px;
+      font-size: 15px;
+    }
+    .summary span { padding: 6px 14px; border-radius: 6px; font-weight: 700; }
+    .summary .pass { background: #1b7f79; color: #fff; }
+    .summary .fail { background: #b44646; color: #fff; }
+    .summary .total { background: #333; color: #ccc; }
+    .results { display: grid; gap: 6px; }
+    .test-row {
+      display: grid;
+      grid-template-columns: 42px 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 10px 14px;
+      border-radius: 6px;
+      background: #16213e;
+    }
+    .test-row.pass { border-left: 4px solid #1b7f79; }
+    .test-row.fail { border-left: 4px solid #b44646; }
+    .test-name { font-weight: 600; }
+    .test-status { font-weight: 700; font-size: 13px; }
+    .test-status.pass { color: #3ecf8e; }
+    .test-status.fail { color: #e94560; }
+    .fail-reason { grid-column: 1/-1; color: #e94560; font-size: 12px; padding: 4px 0 0; }
+  </style>
+</head>
+<body>
+  <h1>宝可梦璀璨宝石 - 自动测试</h1>
+  <div id="summary" class="summary">
+    <span class="total" id="totalCount">总计: 0</span>
+    <span class="pass" id="passCount">通过: 0</span>
+    <span class="fail" id="failCount">失败: 0</span>
+  </div>
+  <div id="results" class="results"></div>
+
+  <div style="display:none">
+    <span id="cardDataStatus"></span>
+    <button id="restartButton"></button>
+    <div id="messageBar"></div>
+    <div id="loadScreen"><input id="cardFileInput" type="file"></div>
+    <div id="startScreen"><select id="playerCount"><option value="2">2</option></select><button id="startButton"></button></div>
+    <div id="gameScreen">
+      <div id="currentPlayerName"></div>
+      <span id="phaseBadge"></span>
+      <div id="scoreLine"></div>
+      <div id="playerTokens"></div>
+      <div id="playerDiscount"></div>
+      <div id="reservedCards"></div>
+      <div id="tableauCards"></div>
+      <div id="publicBoard"></div>
+      <span id="turnLine"></span>
+      <div id="supplyTokens"></div>
+      <div id="selectedCardInfo"></div>
+      <div id="playersSidebar"></div>
+      <div id="actionLogContent"></div>
+      <div id="evolvedArchive"></div>
+      <div id="pendingTokenHint"></div>
+      <div id="pendingTokenActions"></div>
+      <button id="confirmTokenSelectionButton"></button>
+      <button id="clearTokenSelectionButton"></button>
+      <span id="roomBadge"></span>
+      <span id="topCurrentPlayer"></span>
+      <span id="phaseBadgeBottom"></span>
+      <div id="cardPreviewModal"><div id="cardPreviewContent"></div><button id="closeCardPreviewButton"></button></div>
+      <button id="rulesButton"></button>
+      <div id="rulesModal"><button id="closeRulesButton"></button></div>
+      <button id="toggleAIPauseButton"></button>
+      <button id="aiStepButton"></button>
+      <select id="aiSpeedSelect"></select>
+      <div id="aiSpeedRow"></div>
+      <div id="spectatorNotice"></div>
+      <button id="undoButton"></button>
+      <fieldset id="takeThreeChoices"></fieldset>
+      <button id="takeThreeButton"></button>
+      <select id="takeTwoColor"></select>
+      <button id="takeTwoButton"></button>
+      <button id="reserveSelectedButton"></button>
+      <select id="blindDeck"><option value="level1">1</option></select>
+      <button id="blindReserveButton"></button>
+      <button id="buySelectedButton"></button>
+      <div id="discardPanel"><span id="discardHint"></span><div id="discardButtons"></div></div>
+      <button id="skipEvolutionButton"></button>
+      <div id="evolveOptions"></div>
+      <!-- v0.9.2 联机入口体验 DOM（测试用占位） -->
+      <span id="lobbyJoinAddress"></span>
+      <span id="lobbyLanHint"></span>
+      <button id="lobbyCopyRoomCodeButton"></button>
+      <button id="lobbyCopyJoinLinkButton"></button>
+      <button id="howToConnectButton"></button>
+      <div id="howToConnectModal"><button id="closeHowToConnectButton"></button></div>
+      <input id="onlineCreateName" type="text">
+      <input id="onlineJoinName" type="text">
+      <input id="onlineRoomCode" type="text">
+      <button id="modeLocalBtn"></button>
+      <button id="modeOnlineBtn"></button>
+      <div id="localPanel"></div>
+      <div id="onlinePanel"></div>
+      <div id="onlineLobby"><span id="lobbyRoomCode"></span><div id="lobbyPlayerList"></div><button id="startOnlineGameButton"></button><button id="leaveRoomButton"></button><p id="lobbyStatus"></p></div>
+      <button id="createRoomButton"></button>
+      <button id="joinRoomButton"></button>
+      <select id="onlinePlayerCount"><option value="2">2</option></select>
+      <select id="onlineAICount"><option value="0">0</option></select>
+    </div>
+    <div id="finalScreen"><div id="finalRanking"></div></div>
+    <div id="debugPanel"><pre id="debugContent"></pre><select id="debugCardSelect"></select><button id="debugAddToTableau"></button><button id="debugAddToReserved"></button><button id="debugTokenRed"></button><button id="debugTokenBlue"></button><button id="debugTokenBlack"></button><button id="debugTokenPink"></button><button id="debugTokenYellow"></button><button id="debugTokenPurple"></button><button id="debugClearTokens"></button><button id="debugAddManyTokens"></button><button id="debugRefreshScore"></button><button id="debugClearPlayerCards"></button><button id="debugForceEvolve"></button><button id="debugForceEndTurn"></button><button id="debugClearStorage"></button><button id="debugClearCardCache"></button></div>
+  </div>
+
+  <script src="game.js"></script>
+  <script src="tests.js"></script>
+</body>
+</html>

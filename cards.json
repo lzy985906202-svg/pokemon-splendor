@@ -1,0 +1,3253 @@
+{
+  "metadata": {
+    "title": "璀璨宝石：宝可梦 cards.json",
+    "version": "1.0",
+    "baseDeckCardCount": 90,
+    "notes": [
+      "cards 数组只包含基础90张卡：1级35张、2级30张、3级15张、稀有5张、传说/幻之5张。",
+      "optionalAlternateCards 是异画替换卡，不计入基础90张；使用时应替换对应稀有卡，不能合并进牌库。",
+      "cost 表示捕捉费用；bonus 表示捕捉后提供的减免球；evolveCost 表示进化所需的减免球，进化不消耗 token。",
+      "image 字段是建议切图路径，需要你后续按 id 给卡图命名。"
+    ]
+  },
+  "colors": {
+    "red": {
+      "zh": "精灵球",
+      "en": "Poke Ball"
+    },
+    "blue": {
+      "zh": "超级球",
+      "en": "Great Ball"
+    },
+    "black": {
+      "zh": "高级球",
+      "en": "Ultra Ball"
+    },
+    "pink": {
+      "zh": "治愈球",
+      "en": "Heal Ball"
+    },
+    "yellow": {
+      "zh": "先机球/速度球",
+      "en": "Quick Ball"
+    },
+    "purple": {
+      "zh": "大师球",
+      "en": "Master Ball"
+    }
+  },
+  "cards": [
+    {
+      "id": "dratini_l1_a",
+      "name_zh": "迷你龙",
+      "name_en": "Dratini",
+      "category": "normal",
+      "level": 1,
+      "points": 1,
+      "bonus": {
+        "color": "black",
+        "count": 1
+      },
+      "cost": {
+        "red": 0,
+        "blue": 0,
+        "black": 4,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "evolutionLine": "dratini",
+      "evolvesTo": "哈克龙",
+      "evolveCost": {
+        "red": 0,
+        "blue": 3,
+        "black": 0,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 1,
+      "image": "assets/cards/dratini_l1_a.png",
+      "source": {
+        "pdfPage": 2,
+        "position": "row1-col1"
+      }
+    },
+    {
+      "id": "caterpie_l1_a",
+      "name_zh": "绿毛虫",
+      "name_en": "Caterpie",
+      "category": "normal",
+      "level": 1,
+      "points": 0,
+      "bonus": {
+        "color": "pink",
+        "count": 1
+      },
+      "cost": {
+        "red": 1,
+        "blue": 1,
+        "black": 1,
+        "pink": 0,
+        "yellow": 1,
+        "purple": 0
+      },
+      "evolutionLine": "caterpie",
+      "evolvesTo": "铁甲蛹",
+      "evolveCost": {
+        "red": 0,
+        "blue": 3,
+        "black": 0,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 1,
+      "image": "assets/cards/caterpie_l1_a.png",
+      "source": {
+        "pdfPage": 2,
+        "position": "row1-col2"
+      }
+    },
+    {
+      "id": "bulbasaur_l1_a",
+      "name_zh": "妙蛙种子",
+      "name_en": "Bulbasaur",
+      "category": "normal",
+      "level": 1,
+      "points": 1,
+      "bonus": {
+        "color": "yellow",
+        "count": 1
+      },
+      "cost": {
+        "red": 0,
+        "blue": 0,
+        "black": 0,
+        "pink": 0,
+        "yellow": 4,
+        "purple": 0
+      },
+      "evolutionLine": "bulbasaur",
+      "evolvesTo": "妙蛙草",
+      "evolveCost": {
+        "red": 0,
+        "blue": 0,
+        "black": 0,
+        "pink": 3,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 1,
+      "image": "assets/cards/bulbasaur_l1_a.png",
+      "source": {
+        "pdfPage": 2,
+        "position": "row1-col3"
+      }
+    },
+    {
+      "id": "charmander_l1_a",
+      "name_zh": "小火龙",
+      "name_en": "Charmander",
+      "category": "normal",
+      "level": 1,
+      "points": 1,
+      "bonus": {
+        "color": "blue",
+        "count": 1
+      },
+      "cost": {
+        "red": 0,
+        "blue": 4,
+        "black": 0,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "evolutionLine": "charmander",
+      "evolvesTo": "火恐龙",
+      "evolveCost": {
+        "red": 0,
+        "blue": 0,
+        "black": 0,
+        "pink": 0,
+        "yellow": 3,
+        "purple": 0
+      },
+      "copyIndex": 1,
+      "image": "assets/cards/charmander_l1_a.png",
+      "source": {
+        "pdfPage": 2,
+        "position": "row1-col4"
+      }
+    },
+    {
+      "id": "squirtle_l1_a",
+      "name_zh": "杰尼龟",
+      "name_en": "Squirtle",
+      "category": "normal",
+      "level": 1,
+      "points": 1,
+      "bonus": {
+        "color": "red",
+        "count": 1
+      },
+      "cost": {
+        "red": 4,
+        "blue": 0,
+        "black": 0,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "evolutionLine": "squirtle",
+      "evolvesTo": "卡咪龟",
+      "evolveCost": {
+        "red": 0,
+        "blue": 0,
+        "black": 3,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 1,
+      "image": "assets/cards/squirtle_l1_a.png",
+      "source": {
+        "pdfPage": 2,
+        "position": "row1-col5"
+      }
+    },
+    {
+      "id": "weedle_l1_a",
+      "name_zh": "独角虫",
+      "name_en": "Weedle",
+      "category": "normal",
+      "level": 1,
+      "points": 0,
+      "bonus": {
+        "color": "black",
+        "count": 1
+      },
+      "cost": {
+        "red": 1,
+        "blue": 1,
+        "black": 0,
+        "pink": 1,
+        "yellow": 1,
+        "purple": 0
+      },
+      "evolutionLine": "weedle",
+      "evolvesTo": "铁壳蛹",
+      "evolveCost": {
+        "red": 3,
+        "blue": 0,
+        "black": 0,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 1,
+      "image": "assets/cards/weedle_l1_a.png",
+      "source": {
+        "pdfPage": 2,
+        "position": "row2-col1"
+      }
+    },
+    {
+      "id": "poliwag_l1_a",
+      "name_zh": "蚊香蝌蚪",
+      "name_en": "Poliwag",
+      "category": "normal",
+      "level": 1,
+      "points": 0,
+      "bonus": {
+        "color": "pink",
+        "count": 1
+      },
+      "cost": {
+        "red": 0,
+        "blue": 2,
+        "black": 0,
+        "pink": 0,
+        "yellow": 1,
+        "purple": 0
+      },
+      "evolutionLine": "poliwag",
+      "evolvesTo": "蚊香君",
+      "evolveCost": {
+        "red": 0,
+        "blue": 0,
+        "black": 2,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 1,
+      "image": "assets/cards/poliwag_l1_a.png",
+      "source": {
+        "pdfPage": 2,
+        "position": "row2-col2"
+      }
+    },
+    {
+      "id": "nidoran_f_l1_a",
+      "name_zh": "尼多兰♀",
+      "name_en": "Nidoran♀",
+      "category": "normal",
+      "level": 1,
+      "points": 0,
+      "bonus": {
+        "color": "yellow",
+        "count": 1
+      },
+      "cost": {
+        "red": 2,
+        "blue": 0,
+        "black": 0,
+        "pink": 1,
+        "yellow": 0,
+        "purple": 0
+      },
+      "evolutionLine": "nidoran_f",
+      "evolvesTo": "尼多娜",
+      "evolveCost": {
+        "red": 0,
+        "blue": 2,
+        "black": 0,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 1,
+      "image": "assets/cards/nidoran_f_l1_a.png",
+      "source": {
+        "pdfPage": 2,
+        "position": "row2-col3"
+      }
+    },
+    {
+      "id": "pidgey_l1_a",
+      "name_zh": "波波",
+      "name_en": "Pidgey",
+      "category": "normal",
+      "level": 1,
+      "points": 0,
+      "bonus": {
+        "color": "blue",
+        "count": 1
+      },
+      "cost": {
+        "red": 0,
+        "blue": 0,
+        "black": 1,
+        "pink": 0,
+        "yellow": 2,
+        "purple": 0
+      },
+      "evolutionLine": "pidgey",
+      "evolvesTo": "比比鸟",
+      "evolveCost": {
+        "red": 2,
+        "blue": 0,
+        "black": 0,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 1,
+      "image": "assets/cards/pidgey_l1_a.png",
+      "source": {
+        "pdfPage": 2,
+        "position": "row2-col4"
+      }
+    },
+    {
+      "id": "machop_l1_a",
+      "name_zh": "腕力",
+      "name_en": "Machop",
+      "category": "normal",
+      "level": 1,
+      "points": 0,
+      "bonus": {
+        "color": "red",
+        "count": 1
+      },
+      "cost": {
+        "red": 0,
+        "blue": 1,
+        "black": 1,
+        "pink": 1,
+        "yellow": 1,
+        "purple": 0
+      },
+      "evolutionLine": "machop",
+      "evolvesTo": "豪力",
+      "evolveCost": {
+        "red": 0,
+        "blue": 0,
+        "black": 0,
+        "pink": 0,
+        "yellow": 3,
+        "purple": 0
+      },
+      "copyIndex": 1,
+      "image": "assets/cards/machop_l1_a.png",
+      "source": {
+        "pdfPage": 2,
+        "position": "row2-col5"
+      }
+    },
+    {
+      "id": "oddish_l1_a",
+      "name_zh": "走路草",
+      "name_en": "Oddish",
+      "category": "normal",
+      "level": 1,
+      "points": 0,
+      "bonus": {
+        "color": "black",
+        "count": 1
+      },
+      "cost": {
+        "red": 1,
+        "blue": 0,
+        "black": 0,
+        "pink": 2,
+        "yellow": 0,
+        "purple": 0
+      },
+      "evolutionLine": "oddish",
+      "evolvesTo": "臭臭花",
+      "evolveCost": {
+        "red": 0,
+        "blue": 0,
+        "black": 0,
+        "pink": 0,
+        "yellow": 2,
+        "purple": 0
+      },
+      "copyIndex": 1,
+      "image": "assets/cards/oddish_l1_a.png",
+      "source": {
+        "pdfPage": 4,
+        "position": "row1-col1"
+      }
+    },
+    {
+      "id": "abra_l1_a",
+      "name_zh": "凯西",
+      "name_en": "Abra",
+      "category": "normal",
+      "level": 1,
+      "points": 1,
+      "bonus": {
+        "color": "pink",
+        "count": 1
+      },
+      "cost": {
+        "red": 0,
+        "blue": 0,
+        "black": 0,
+        "pink": 4,
+        "yellow": 0,
+        "purple": 0
+      },
+      "evolutionLine": "abra",
+      "evolvesTo": "勇基拉",
+      "evolveCost": {
+        "red": 3,
+        "blue": 0,
+        "black": 0,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 1,
+      "image": "assets/cards/abra_l1_a.png",
+      "source": {
+        "pdfPage": 4,
+        "position": "row1-col2"
+      }
+    },
+    {
+      "id": "gastly_l1_a",
+      "name_zh": "鬼斯",
+      "name_en": "Gastly",
+      "category": "normal",
+      "level": 1,
+      "points": 0,
+      "bonus": {
+        "color": "yellow",
+        "count": 1
+      },
+      "cost": {
+        "red": 1,
+        "blue": 1,
+        "black": 1,
+        "pink": 1,
+        "yellow": 0,
+        "purple": 0
+      },
+      "evolutionLine": "gastly",
+      "evolvesTo": "鬼斯通",
+      "evolveCost": {
+        "red": 0,
+        "blue": 0,
+        "black": 3,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 1,
+      "image": "assets/cards/gastly_l1_a.png",
+      "source": {
+        "pdfPage": 4,
+        "position": "row1-col3"
+      }
+    },
+    {
+      "id": "geodude_l1_a",
+      "name_zh": "小拳石",
+      "name_en": "Geodude",
+      "category": "normal",
+      "level": 1,
+      "points": 0,
+      "bonus": {
+        "color": "blue",
+        "count": 1
+      },
+      "cost": {
+        "red": 1,
+        "blue": 0,
+        "black": 1,
+        "pink": 1,
+        "yellow": 1,
+        "purple": 0
+      },
+      "evolutionLine": "geodude",
+      "evolvesTo": "隆隆石",
+      "evolveCost": {
+        "red": 0,
+        "blue": 0,
+        "black": 0,
+        "pink": 3,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 1,
+      "image": "assets/cards/geodude_l1_a.png",
+      "source": {
+        "pdfPage": 4,
+        "position": "row1-col4"
+      }
+    },
+    {
+      "id": "bellsprout_l1_a",
+      "name_zh": "喇叭芽",
+      "name_en": "Bellsprout",
+      "category": "normal",
+      "level": 1,
+      "points": 0,
+      "bonus": {
+        "color": "red",
+        "count": 1
+      },
+      "cost": {
+        "red": 0,
+        "blue": 1,
+        "black": 2,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "evolutionLine": "bellsprout",
+      "evolvesTo": "口呆花",
+      "evolveCost": {
+        "red": 0,
+        "blue": 0,
+        "black": 0,
+        "pink": 2,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 1,
+      "image": "assets/cards/bellsprout_l1_a.png",
+      "source": {
+        "pdfPage": 4,
+        "position": "row1-col5"
+      }
+    },
+    {
+      "id": "bellsprout_l1_b",
+      "name_zh": "喇叭芽",
+      "name_en": "Bellsprout",
+      "category": "normal",
+      "level": 1,
+      "points": 0,
+      "bonus": {
+        "color": "red",
+        "count": 1
+      },
+      "cost": {
+        "red": 2,
+        "blue": 0,
+        "black": 0,
+        "pink": 2,
+        "yellow": 0,
+        "purple": 0
+      },
+      "evolutionLine": "bellsprout",
+      "evolvesTo": "口呆花",
+      "evolveCost": {
+        "red": 0,
+        "blue": 0,
+        "black": 0,
+        "pink": 2,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 2,
+      "image": "assets/cards/bellsprout_l1_b.png",
+      "source": {
+        "pdfPage": 4,
+        "position": "row2-col1"
+      }
+    },
+    {
+      "id": "pidgey_l1_b",
+      "name_zh": "波波",
+      "name_en": "Pidgey",
+      "category": "normal",
+      "level": 1,
+      "points": 0,
+      "bonus": {
+        "color": "blue",
+        "count": 1
+      },
+      "cost": {
+        "red": 2,
+        "blue": 2,
+        "black": 0,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "evolutionLine": "pidgey",
+      "evolvesTo": "比比鸟",
+      "evolveCost": {
+        "red": 2,
+        "blue": 0,
+        "black": 0,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 2,
+      "image": "assets/cards/pidgey_l1_b.png",
+      "source": {
+        "pdfPage": 4,
+        "position": "row2-col2"
+      }
+    },
+    {
+      "id": "nidoran_f_l1_b",
+      "name_zh": "尼多兰♀",
+      "name_en": "Nidoran♀",
+      "category": "normal",
+      "level": 1,
+      "points": 0,
+      "bonus": {
+        "color": "yellow",
+        "count": 1
+      },
+      "cost": {
+        "red": 0,
+        "blue": 2,
+        "black": 0,
+        "pink": 0,
+        "yellow": 2,
+        "purple": 0
+      },
+      "evolutionLine": "nidoran_f",
+      "evolvesTo": "尼多娜",
+      "evolveCost": {
+        "red": 0,
+        "blue": 2,
+        "black": 0,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 2,
+      "image": "assets/cards/nidoran_f_l1_b.png",
+      "source": {
+        "pdfPage": 4,
+        "position": "row2-col3"
+      }
+    },
+    {
+      "id": "poliwag_l1_b",
+      "name_zh": "蚊香蝌蚪",
+      "name_en": "Poliwag",
+      "category": "normal",
+      "level": 1,
+      "points": 0,
+      "bonus": {
+        "color": "pink",
+        "count": 1
+      },
+      "cost": {
+        "red": 0,
+        "blue": 0,
+        "black": 2,
+        "pink": 2,
+        "yellow": 0,
+        "purple": 0
+      },
+      "evolutionLine": "poliwag",
+      "evolvesTo": "蚊香君",
+      "evolveCost": {
+        "red": 0,
+        "blue": 0,
+        "black": 2,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 2,
+      "image": "assets/cards/poliwag_l1_b.png",
+      "source": {
+        "pdfPage": 4,
+        "position": "row2-col4"
+      }
+    },
+    {
+      "id": "machop_l1_b",
+      "name_zh": "腕力",
+      "name_en": "Machop",
+      "category": "normal",
+      "level": 1,
+      "points": 0,
+      "bonus": {
+        "color": "red",
+        "count": 1
+      },
+      "cost": {
+        "red": 0,
+        "blue": 0,
+        "black": 1,
+        "pink": 1,
+        "yellow": 2,
+        "purple": 0
+      },
+      "evolutionLine": "machop",
+      "evolvesTo": "豪力",
+      "evolveCost": {
+        "red": 0,
+        "blue": 0,
+        "black": 0,
+        "pink": 0,
+        "yellow": 3,
+        "purple": 0
+      },
+      "copyIndex": 2,
+      "image": "assets/cards/machop_l1_b.png",
+      "source": {
+        "pdfPage": 4,
+        "position": "row2-col5"
+      }
+    },
+    {
+      "id": "oddish_l1_b",
+      "name_zh": "走路草",
+      "name_en": "Oddish",
+      "category": "normal",
+      "level": 1,
+      "points": 0,
+      "bonus": {
+        "color": "black",
+        "count": 1
+      },
+      "cost": {
+        "red": 0,
+        "blue": 0,
+        "black": 2,
+        "pink": 0,
+        "yellow": 2,
+        "purple": 0
+      },
+      "evolutionLine": "oddish",
+      "evolvesTo": "臭臭花",
+      "evolveCost": {
+        "red": 0,
+        "blue": 0,
+        "black": 0,
+        "pink": 0,
+        "yellow": 2,
+        "purple": 0
+      },
+      "copyIndex": 2,
+      "image": "assets/cards/oddish_l1_b.png",
+      "source": {
+        "pdfPage": 6,
+        "position": "row1-col1"
+      }
+    },
+    {
+      "id": "abra_l1_b",
+      "name_zh": "凯西",
+      "name_en": "Abra",
+      "category": "normal",
+      "level": 1,
+      "points": 1,
+      "bonus": {
+        "color": "pink",
+        "count": 1
+      },
+      "cost": {
+        "red": 0,
+        "blue": 3,
+        "black": 0,
+        "pink": 0,
+        "yellow": 2,
+        "purple": 0
+      },
+      "evolutionLine": "abra",
+      "evolvesTo": "勇基拉",
+      "evolveCost": {
+        "red": 3,
+        "blue": 0,
+        "black": 0,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 2,
+      "image": "assets/cards/abra_l1_b.png",
+      "source": {
+        "pdfPage": 6,
+        "position": "row1-col2"
+      }
+    },
+    {
+      "id": "gastly_l1_b",
+      "name_zh": "鬼斯",
+      "name_en": "Gastly",
+      "category": "normal",
+      "level": 1,
+      "points": 0,
+      "bonus": {
+        "color": "yellow",
+        "count": 1
+      },
+      "cost": {
+        "red": 1,
+        "blue": 0,
+        "black": 1,
+        "pink": 2,
+        "yellow": 0,
+        "purple": 0
+      },
+      "evolutionLine": "gastly",
+      "evolvesTo": "鬼斯通",
+      "evolveCost": {
+        "red": 0,
+        "blue": 0,
+        "black": 3,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 2,
+      "image": "assets/cards/gastly_l1_b.png",
+      "source": {
+        "pdfPage": 6,
+        "position": "row1-col3"
+      }
+    },
+    {
+      "id": "geodude_l1_b",
+      "name_zh": "小拳石",
+      "name_en": "Geodude",
+      "category": "normal",
+      "level": 1,
+      "points": 0,
+      "bonus": {
+        "color": "blue",
+        "count": 1
+      },
+      "cost": {
+        "red": 2,
+        "blue": 1,
+        "black": 0,
+        "pink": 0,
+        "yellow": 1,
+        "purple": 0
+      },
+      "evolutionLine": "geodude",
+      "evolvesTo": "隆隆石",
+      "evolveCost": {
+        "red": 0,
+        "blue": 0,
+        "black": 0,
+        "pink": 3,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 2,
+      "image": "assets/cards/geodude_l1_b.png",
+      "source": {
+        "pdfPage": 6,
+        "position": "row1-col4"
+      }
+    },
+    {
+      "id": "dratini_l1_b",
+      "name_zh": "迷你龙",
+      "name_en": "Dratini",
+      "category": "normal",
+      "level": 1,
+      "points": 1,
+      "bonus": {
+        "color": "black",
+        "count": 1
+      },
+      "cost": {
+        "red": 2,
+        "blue": 0,
+        "black": 0,
+        "pink": 0,
+        "yellow": 3,
+        "purple": 0
+      },
+      "evolutionLine": "dratini",
+      "evolvesTo": "哈克龙",
+      "evolveCost": {
+        "red": 0,
+        "blue": 3,
+        "black": 0,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 2,
+      "image": "assets/cards/dratini_l1_b.png",
+      "source": {
+        "pdfPage": 6,
+        "position": "row1-col5"
+      }
+    },
+    {
+      "id": "caterpie_l1_b",
+      "name_zh": "绿毛虫",
+      "name_en": "Caterpie",
+      "category": "normal",
+      "level": 1,
+      "points": 0,
+      "bonus": {
+        "color": "pink",
+        "count": 1
+      },
+      "cost": {
+        "red": 0,
+        "blue": 1,
+        "black": 2,
+        "pink": 0,
+        "yellow": 1,
+        "purple": 0
+      },
+      "evolutionLine": "caterpie",
+      "evolvesTo": "铁甲蛹",
+      "evolveCost": {
+        "red": 0,
+        "blue": 3,
+        "black": 0,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 2,
+      "image": "assets/cards/caterpie_l1_b.png",
+      "source": {
+        "pdfPage": 6,
+        "position": "row2-col1"
+      }
+    },
+    {
+      "id": "bulbasaur_l1_b",
+      "name_zh": "妙蛙种子",
+      "name_en": "Bulbasaur",
+      "category": "normal",
+      "level": 1,
+      "points": 1,
+      "bonus": {
+        "color": "yellow",
+        "count": 1
+      },
+      "cost": {
+        "red": 3,
+        "blue": 0,
+        "black": 2,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "evolutionLine": "bulbasaur",
+      "evolvesTo": "妙蛙草",
+      "evolveCost": {
+        "red": 0,
+        "blue": 0,
+        "black": 0,
+        "pink": 3,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 2,
+      "image": "assets/cards/bulbasaur_l1_b.png",
+      "source": {
+        "pdfPage": 6,
+        "position": "row2-col2"
+      }
+    },
+    {
+      "id": "charmander_l1_b",
+      "name_zh": "小火龙",
+      "name_en": "Charmander",
+      "category": "normal",
+      "level": 1,
+      "points": 1,
+      "bonus": {
+        "color": "blue",
+        "count": 1
+      },
+      "cost": {
+        "red": 0,
+        "blue": 0,
+        "black": 3,
+        "pink": 2,
+        "yellow": 0,
+        "purple": 0
+      },
+      "evolutionLine": "charmander",
+      "evolvesTo": "火恐龙",
+      "evolveCost": {
+        "red": 0,
+        "blue": 0,
+        "black": 0,
+        "pink": 0,
+        "yellow": 3,
+        "purple": 0
+      },
+      "copyIndex": 2,
+      "image": "assets/cards/charmander_l1_b.png",
+      "source": {
+        "pdfPage": 6,
+        "position": "row2-col3"
+      }
+    },
+    {
+      "id": "squirtle_l1_b",
+      "name_zh": "杰尼龟",
+      "name_en": "Squirtle",
+      "category": "normal",
+      "level": 1,
+      "points": 1,
+      "bonus": {
+        "color": "red",
+        "count": 1
+      },
+      "cost": {
+        "red": 0,
+        "blue": 2,
+        "black": 0,
+        "pink": 3,
+        "yellow": 0,
+        "purple": 0
+      },
+      "evolutionLine": "squirtle",
+      "evolvesTo": "卡咪龟",
+      "evolveCost": {
+        "red": 0,
+        "blue": 0,
+        "black": 3,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 2,
+      "image": "assets/cards/squirtle_l1_b.png",
+      "source": {
+        "pdfPage": 6,
+        "position": "row2-col4"
+      }
+    },
+    {
+      "id": "weedle_l1_b",
+      "name_zh": "独角虫",
+      "name_en": "Weedle",
+      "category": "normal",
+      "level": 1,
+      "points": 0,
+      "bonus": {
+        "color": "black",
+        "count": 1
+      },
+      "cost": {
+        "red": 1,
+        "blue": 2,
+        "black": 0,
+        "pink": 1,
+        "yellow": 0,
+        "purple": 0
+      },
+      "evolutionLine": "weedle",
+      "evolvesTo": "铁壳蛹",
+      "evolveCost": {
+        "red": 3,
+        "blue": 0,
+        "black": 0,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 2,
+      "image": "assets/cards/weedle_l1_b.png",
+      "source": {
+        "pdfPage": 6,
+        "position": "row2-col5"
+      }
+    },
+    {
+      "id": "bellsprout_l1_c",
+      "name_zh": "喇叭芽",
+      "name_en": "Bellsprout",
+      "category": "normal",
+      "level": 1,
+      "points": 0,
+      "bonus": {
+        "color": "red",
+        "count": 1
+      },
+      "cost": {
+        "red": 0,
+        "blue": 0,
+        "black": 0,
+        "pink": 0,
+        "yellow": 3,
+        "purple": 0
+      },
+      "evolutionLine": "bellsprout",
+      "evolvesTo": "口呆花",
+      "evolveCost": {
+        "red": 0,
+        "blue": 0,
+        "black": 0,
+        "pink": 2,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 3,
+      "image": "assets/cards/bellsprout_l1_c.png",
+      "source": {
+        "pdfPage": 8,
+        "position": "row1-col1"
+      }
+    },
+    {
+      "id": "pidgey_l1_c",
+      "name_zh": "波波",
+      "name_en": "Pidgey",
+      "category": "normal",
+      "level": 1,
+      "points": 0,
+      "bonus": {
+        "color": "blue",
+        "count": 1
+      },
+      "cost": {
+        "red": 0,
+        "blue": 0,
+        "black": 0,
+        "pink": 3,
+        "yellow": 0,
+        "purple": 0
+      },
+      "evolutionLine": "pidgey",
+      "evolvesTo": "比比鸟",
+      "evolveCost": {
+        "red": 2,
+        "blue": 0,
+        "black": 0,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 3,
+      "image": "assets/cards/pidgey_l1_c.png",
+      "source": {
+        "pdfPage": 8,
+        "position": "row1-col2"
+      }
+    },
+    {
+      "id": "nidoran_f_l1_c",
+      "name_zh": "尼多兰♀",
+      "name_en": "Nidoran♀",
+      "category": "normal",
+      "level": 1,
+      "points": 0,
+      "bonus": {
+        "color": "yellow",
+        "count": 1
+      },
+      "cost": {
+        "red": 0,
+        "blue": 0,
+        "black": 3,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "evolutionLine": "nidoran_f",
+      "evolvesTo": "尼多娜",
+      "evolveCost": {
+        "red": 0,
+        "blue": 2,
+        "black": 0,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 3,
+      "image": "assets/cards/nidoran_f_l1_c.png",
+      "source": {
+        "pdfPage": 8,
+        "position": "row1-col3"
+      }
+    },
+    {
+      "id": "poliwag_l1_c",
+      "name_zh": "蚊香蝌蚪",
+      "name_en": "Poliwag",
+      "category": "normal",
+      "level": 1,
+      "points": 0,
+      "bonus": {
+        "color": "pink",
+        "count": 1
+      },
+      "cost": {
+        "red": 3,
+        "blue": 0,
+        "black": 0,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "evolutionLine": "poliwag",
+      "evolvesTo": "蚊香君",
+      "evolveCost": {
+        "red": 0,
+        "blue": 0,
+        "black": 2,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 3,
+      "image": "assets/cards/poliwag_l1_c.png",
+      "source": {
+        "pdfPage": 8,
+        "position": "row1-col4"
+      }
+    },
+    {
+      "id": "oddish_l1_c",
+      "name_zh": "走路草",
+      "name_en": "Oddish",
+      "category": "normal",
+      "level": 1,
+      "points": 0,
+      "bonus": {
+        "color": "black",
+        "count": 1
+      },
+      "cost": {
+        "red": 0,
+        "blue": 3,
+        "black": 0,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "evolutionLine": "oddish",
+      "evolvesTo": "臭臭花",
+      "evolveCost": {
+        "red": 0,
+        "blue": 0,
+        "black": 0,
+        "pink": 0,
+        "yellow": 2,
+        "purple": 0
+      },
+      "copyIndex": 3,
+      "image": "assets/cards/oddish_l1_c.png",
+      "source": {
+        "pdfPage": 8,
+        "position": "row1-col5"
+      }
+    },
+    {
+      "id": "dragonair_l2_a",
+      "name_zh": "哈克龙",
+      "name_en": "Dragonair",
+      "category": "normal",
+      "level": 2,
+      "points": 3,
+      "bonus": {
+        "color": "black",
+        "count": 1
+      },
+      "cost": {
+        "red": 0,
+        "blue": 0,
+        "black": 6,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "evolutionLine": "dratini",
+      "evolvesTo": "快龙",
+      "evolveCost": {
+        "red": 0,
+        "blue": 0,
+        "black": 0,
+        "pink": 0,
+        "yellow": 4,
+        "purple": 0
+      },
+      "copyIndex": 1,
+      "image": "assets/cards/dragonair_l2_a.png",
+      "source": {
+        "pdfPage": 10,
+        "position": "row1-col1"
+      }
+    },
+    {
+      "id": "metapod_l2_a",
+      "name_zh": "铁甲蛹",
+      "name_en": "Metapod",
+      "category": "normal",
+      "level": 2,
+      "points": 2,
+      "bonus": {
+        "color": "pink",
+        "count": 1
+      },
+      "cost": {
+        "red": 0,
+        "blue": 0,
+        "black": 2,
+        "pink": 5,
+        "yellow": 0,
+        "purple": 0
+      },
+      "evolutionLine": "caterpie",
+      "evolvesTo": "巴大蝶",
+      "evolveCost": {
+        "red": 0,
+        "blue": 0,
+        "black": 0,
+        "pink": 0,
+        "yellow": 3,
+        "purple": 0
+      },
+      "copyIndex": 1,
+      "image": "assets/cards/metapod_l2_a.png",
+      "source": {
+        "pdfPage": 10,
+        "position": "row1-col2"
+      }
+    },
+    {
+      "id": "ivysaur_l2_a",
+      "name_zh": "妙蛙草",
+      "name_en": "Ivysaur",
+      "category": "normal",
+      "level": 2,
+      "points": 3,
+      "bonus": {
+        "color": "yellow",
+        "count": 1
+      },
+      "cost": {
+        "red": 0,
+        "blue": 0,
+        "black": 0,
+        "pink": 0,
+        "yellow": 6,
+        "purple": 0
+      },
+      "evolutionLine": "bulbasaur",
+      "evolvesTo": "妙蛙花",
+      "evolveCost": {
+        "red": 0,
+        "blue": 4,
+        "black": 0,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 1,
+      "image": "assets/cards/ivysaur_l2_a.png",
+      "source": {
+        "pdfPage": 10,
+        "position": "row1-col3"
+      }
+    },
+    {
+      "id": "charmeleon_l2_a",
+      "name_zh": "火恐龙",
+      "name_en": "Charmeleon",
+      "category": "normal",
+      "level": 2,
+      "points": 3,
+      "bonus": {
+        "color": "blue",
+        "count": 1
+      },
+      "cost": {
+        "red": 0,
+        "blue": 6,
+        "black": 0,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "evolutionLine": "charmander",
+      "evolvesTo": "喷火龙",
+      "evolveCost": {
+        "red": 4,
+        "blue": 0,
+        "black": 0,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 1,
+      "image": "assets/cards/charmeleon_l2_a.png",
+      "source": {
+        "pdfPage": 10,
+        "position": "row1-col4"
+      }
+    },
+    {
+      "id": "wartortle_l2_a",
+      "name_zh": "卡咪龟",
+      "name_en": "Wartortle",
+      "category": "normal",
+      "level": 2,
+      "points": 3,
+      "bonus": {
+        "color": "red",
+        "count": 1
+      },
+      "cost": {
+        "red": 6,
+        "blue": 0,
+        "black": 0,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "evolutionLine": "squirtle",
+      "evolvesTo": "水箭龟",
+      "evolveCost": {
+        "red": 0,
+        "blue": 0,
+        "black": 0,
+        "pink": 4,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 1,
+      "image": "assets/cards/wartortle_l2_a.png",
+      "source": {
+        "pdfPage": 10,
+        "position": "row1-col5"
+      }
+    },
+    {
+      "id": "kakuna_l2_a",
+      "name_zh": "铁壳蛹",
+      "name_en": "Kakuna",
+      "category": "normal",
+      "level": 2,
+      "points": 2,
+      "bonus": {
+        "color": "black",
+        "count": 1
+      },
+      "cost": {
+        "red": 0,
+        "blue": 0,
+        "black": 5,
+        "pink": 0,
+        "yellow": 2,
+        "purple": 0
+      },
+      "evolutionLine": "weedle",
+      "evolvesTo": "大针蜂",
+      "evolveCost": {
+        "red": 0,
+        "blue": 0,
+        "black": 0,
+        "pink": 3,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 1,
+      "image": "assets/cards/kakuna_l2_a.png",
+      "source": {
+        "pdfPage": 10,
+        "position": "row2-col1"
+      }
+    },
+    {
+      "id": "poliwhirl_l2_a",
+      "name_zh": "蚊香君",
+      "name_en": "Poliwhirl",
+      "category": "normal",
+      "level": 2,
+      "points": 1,
+      "bonus": {
+        "color": "pink",
+        "count": 1
+      },
+      "cost": {
+        "red": 0,
+        "blue": 2,
+        "black": 0,
+        "pink": 3,
+        "yellow": 2,
+        "purple": 0
+      },
+      "evolutionLine": "poliwag",
+      "evolvesTo": "蚊香泳士",
+      "evolveCost": {
+        "red": 0,
+        "blue": 0,
+        "black": 4,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 1,
+      "image": "assets/cards/poliwhirl_l2_a.png",
+      "source": {
+        "pdfPage": 10,
+        "position": "row2-col2"
+      }
+    },
+    {
+      "id": "nidorina_l2_a",
+      "name_zh": "尼多娜",
+      "name_en": "Nidorina",
+      "category": "normal",
+      "level": 2,
+      "points": 1,
+      "bonus": {
+        "color": "yellow",
+        "count": 1
+      },
+      "cost": {
+        "red": 2,
+        "blue": 0,
+        "black": 0,
+        "pink": 2,
+        "yellow": 3,
+        "purple": 0
+      },
+      "evolutionLine": "nidoran_f",
+      "evolvesTo": "尼多后",
+      "evolveCost": {
+        "red": 0,
+        "blue": 0,
+        "black": 0,
+        "pink": 4,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 1,
+      "image": "assets/cards/nidorina_l2_a.png",
+      "source": {
+        "pdfPage": 10,
+        "position": "row2-col3"
+      }
+    },
+    {
+      "id": "pidgeotto_l2_a",
+      "name_zh": "比比鸟",
+      "name_en": "Pidgeotto",
+      "category": "normal",
+      "level": 2,
+      "points": 1,
+      "bonus": {
+        "color": "blue",
+        "count": 1
+      },
+      "cost": {
+        "red": 0,
+        "blue": 3,
+        "black": 2,
+        "pink": 2,
+        "yellow": 0,
+        "purple": 0
+      },
+      "evolutionLine": "pidgey",
+      "evolvesTo": "大比鸟",
+      "evolveCost": {
+        "red": 4,
+        "blue": 0,
+        "black": 0,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 1,
+      "image": "assets/cards/pidgeotto_l2_a.png",
+      "source": {
+        "pdfPage": 10,
+        "position": "row2-col4"
+      }
+    },
+    {
+      "id": "machoke_l2_a",
+      "name_zh": "豪力",
+      "name_en": "Machoke",
+      "category": "normal",
+      "level": 2,
+      "points": 2,
+      "bonus": {
+        "color": "red",
+        "count": 1
+      },
+      "cost": {
+        "red": 5,
+        "blue": 0,
+        "black": 0,
+        "pink": 2,
+        "yellow": 0,
+        "purple": 0
+      },
+      "evolutionLine": "machop",
+      "evolvesTo": "怪力",
+      "evolveCost": {
+        "red": 0,
+        "blue": 3,
+        "black": 0,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 1,
+      "image": "assets/cards/machoke_l2_a.png",
+      "source": {
+        "pdfPage": 10,
+        "position": "row2-col5"
+      }
+    },
+    {
+      "id": "gloom_l2_a",
+      "name_zh": "臭臭花",
+      "name_en": "Gloom",
+      "category": "normal",
+      "level": 2,
+      "points": 1,
+      "bonus": {
+        "color": "black",
+        "count": 1
+      },
+      "cost": {
+        "red": 0,
+        "blue": 2,
+        "black": 3,
+        "pink": 0,
+        "yellow": 2,
+        "purple": 0
+      },
+      "evolutionLine": "oddish",
+      "evolvesTo": "霸王花",
+      "evolveCost": {
+        "red": 0,
+        "blue": 0,
+        "black": 0,
+        "pink": 0,
+        "yellow": 4,
+        "purple": 0
+      },
+      "copyIndex": 1,
+      "image": "assets/cards/gloom_l2_a.png",
+      "source": {
+        "pdfPage": 12,
+        "position": "row1-col1"
+      }
+    },
+    {
+      "id": "kadabra_l2_a",
+      "name_zh": "勇基拉",
+      "name_en": "Kadabra",
+      "category": "normal",
+      "level": 2,
+      "points": 3,
+      "bonus": {
+        "color": "pink",
+        "count": 1
+      },
+      "cost": {
+        "red": 0,
+        "blue": 0,
+        "black": 0,
+        "pink": 6,
+        "yellow": 0,
+        "purple": 0
+      },
+      "evolutionLine": "abra",
+      "evolvesTo": "胡地",
+      "evolveCost": {
+        "red": 0,
+        "blue": 0,
+        "black": 4,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 1,
+      "image": "assets/cards/kadabra_l2_a.png",
+      "source": {
+        "pdfPage": 12,
+        "position": "row1-col2"
+      }
+    },
+    {
+      "id": "haunter_l2_a",
+      "name_zh": "鬼斯通",
+      "name_en": "Haunter",
+      "category": "normal",
+      "level": 2,
+      "points": 2,
+      "bonus": {
+        "color": "yellow",
+        "count": 1
+      },
+      "cost": {
+        "red": 0,
+        "blue": 2,
+        "black": 0,
+        "pink": 0,
+        "yellow": 5,
+        "purple": 0
+      },
+      "evolutionLine": "gastly",
+      "evolvesTo": "耿鬼",
+      "evolveCost": {
+        "red": 3,
+        "blue": 0,
+        "black": 0,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 1,
+      "image": "assets/cards/haunter_l2_a.png",
+      "source": {
+        "pdfPage": 12,
+        "position": "row1-col3"
+      }
+    },
+    {
+      "id": "graveler_l2_a",
+      "name_zh": "隆隆石",
+      "name_en": "Graveler",
+      "category": "normal",
+      "level": 2,
+      "points": 2,
+      "bonus": {
+        "color": "blue",
+        "count": 1
+      },
+      "cost": {
+        "red": 2,
+        "blue": 5,
+        "black": 0,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "evolutionLine": "geodude",
+      "evolvesTo": "隆隆岩",
+      "evolveCost": {
+        "red": 0,
+        "blue": 0,
+        "black": 3,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 1,
+      "image": "assets/cards/graveler_l2_a.png",
+      "source": {
+        "pdfPage": 12,
+        "position": "row1-col4"
+      }
+    },
+    {
+      "id": "weepinbell_l2_a",
+      "name_zh": "口呆花",
+      "name_en": "Weepinbell",
+      "category": "normal",
+      "level": 2,
+      "points": 1,
+      "bonus": {
+        "color": "red",
+        "count": 1
+      },
+      "cost": {
+        "red": 3,
+        "blue": 0,
+        "black": 2,
+        "pink": 0,
+        "yellow": 2,
+        "purple": 0
+      },
+      "evolutionLine": "bellsprout",
+      "evolvesTo": "大食花",
+      "evolveCost": {
+        "red": 0,
+        "blue": 0,
+        "black": 0,
+        "pink": 4,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 1,
+      "image": "assets/cards/weepinbell_l2_a.png",
+      "source": {
+        "pdfPage": 12,
+        "position": "row1-col5"
+      }
+    },
+    {
+      "id": "dragonair_l2_b",
+      "name_zh": "哈克龙",
+      "name_en": "Dragonair",
+      "category": "normal",
+      "level": 2,
+      "points": 3,
+      "bonus": {
+        "color": "black",
+        "count": 1
+      },
+      "cost": {
+        "red": 0,
+        "blue": 4,
+        "black": 0,
+        "pink": 4,
+        "yellow": 1,
+        "purple": 0
+      },
+      "evolutionLine": "dratini",
+      "evolvesTo": "快龙",
+      "evolveCost": {
+        "red": 0,
+        "blue": 0,
+        "black": 0,
+        "pink": 0,
+        "yellow": 4,
+        "purple": 0
+      },
+      "copyIndex": 2,
+      "image": "assets/cards/dragonair_l2_b.png",
+      "source": {
+        "pdfPage": 12,
+        "position": "row2-col1"
+      }
+    },
+    {
+      "id": "metapod_l2_b",
+      "name_zh": "铁甲蛹",
+      "name_en": "Metapod",
+      "category": "normal",
+      "level": 2,
+      "points": 2,
+      "bonus": {
+        "color": "pink",
+        "count": 1
+      },
+      "cost": {
+        "red": 2,
+        "blue": 4,
+        "black": 0,
+        "pink": 0,
+        "yellow": 1,
+        "purple": 0
+      },
+      "evolutionLine": "caterpie",
+      "evolvesTo": "巴大蝶",
+      "evolveCost": {
+        "red": 0,
+        "blue": 0,
+        "black": 0,
+        "pink": 0,
+        "yellow": 3,
+        "purple": 0
+      },
+      "copyIndex": 2,
+      "image": "assets/cards/metapod_l2_b.png",
+      "source": {
+        "pdfPage": 12,
+        "position": "row2-col2"
+      }
+    },
+    {
+      "id": "ivysaur_l2_b",
+      "name_zh": "妙蛙草",
+      "name_en": "Ivysaur",
+      "category": "normal",
+      "level": 2,
+      "points": 3,
+      "bonus": {
+        "color": "yellow",
+        "count": 1
+      },
+      "cost": {
+        "red": 4,
+        "blue": 1,
+        "black": 0,
+        "pink": 4,
+        "yellow": 0,
+        "purple": 0
+      },
+      "evolutionLine": "bulbasaur",
+      "evolvesTo": "妙蛙花",
+      "evolveCost": {
+        "red": 0,
+        "blue": 4,
+        "black": 0,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 2,
+      "image": "assets/cards/ivysaur_l2_b.png",
+      "source": {
+        "pdfPage": 12,
+        "position": "row2-col3"
+      }
+    },
+    {
+      "id": "charmeleon_l2_b",
+      "name_zh": "火恐龙",
+      "name_en": "Charmeleon",
+      "category": "normal",
+      "level": 2,
+      "points": 3,
+      "bonus": {
+        "color": "blue",
+        "count": 1
+      },
+      "cost": {
+        "red": 1,
+        "blue": 0,
+        "black": 4,
+        "pink": 0,
+        "yellow": 4,
+        "purple": 0
+      },
+      "evolutionLine": "charmander",
+      "evolvesTo": "喷火龙",
+      "evolveCost": {
+        "red": 4,
+        "blue": 0,
+        "black": 0,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 2,
+      "image": "assets/cards/charmeleon_l2_b.png",
+      "source": {
+        "pdfPage": 12,
+        "position": "row2-col4"
+      }
+    },
+    {
+      "id": "wartortle_l2_b",
+      "name_zh": "卡咪龟",
+      "name_en": "Wartortle",
+      "category": "normal",
+      "level": 2,
+      "points": 3,
+      "bonus": {
+        "color": "red",
+        "count": 1
+      },
+      "cost": {
+        "red": 0,
+        "blue": 4,
+        "black": 4,
+        "pink": 1,
+        "yellow": 0,
+        "purple": 0
+      },
+      "evolutionLine": "squirtle",
+      "evolvesTo": "水箭龟",
+      "evolveCost": {
+        "red": 0,
+        "blue": 0,
+        "black": 0,
+        "pink": 4,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 2,
+      "image": "assets/cards/wartortle_l2_b.png",
+      "source": {
+        "pdfPage": 12,
+        "position": "row2-col5"
+      }
+    },
+    {
+      "id": "kakuna_l2_b",
+      "name_zh": "铁壳蛹",
+      "name_en": "Kakuna",
+      "category": "normal",
+      "level": 2,
+      "points": 2,
+      "bonus": {
+        "color": "black",
+        "count": 1
+      },
+      "cost": {
+        "red": 4,
+        "blue": 2,
+        "black": 0,
+        "pink": 1,
+        "yellow": 0,
+        "purple": 0
+      },
+      "evolutionLine": "weedle",
+      "evolvesTo": "大针蜂",
+      "evolveCost": {
+        "red": 0,
+        "blue": 0,
+        "black": 0,
+        "pink": 3,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 2,
+      "image": "assets/cards/kakuna_l2_b.png",
+      "source": {
+        "pdfPage": 14,
+        "position": "row1-col1"
+      }
+    },
+    {
+      "id": "poliwhirl_l2_b",
+      "name_zh": "蚊香君",
+      "name_en": "Poliwhirl",
+      "category": "normal",
+      "level": 2,
+      "points": 1,
+      "bonus": {
+        "color": "pink",
+        "count": 1
+      },
+      "cost": {
+        "red": 2,
+        "blue": 2,
+        "black": 3,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "evolutionLine": "poliwag",
+      "evolvesTo": "蚊香泳士",
+      "evolveCost": {
+        "red": 0,
+        "blue": 0,
+        "black": 4,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 2,
+      "image": "assets/cards/poliwhirl_l2_b.png",
+      "source": {
+        "pdfPage": 14,
+        "position": "row1-col2"
+      }
+    },
+    {
+      "id": "nidorina_l2_b",
+      "name_zh": "尼多娜",
+      "name_en": "Nidorina",
+      "category": "normal",
+      "level": 2,
+      "points": 1,
+      "bonus": {
+        "color": "yellow",
+        "count": 1
+      },
+      "cost": {
+        "red": 0,
+        "blue": 3,
+        "black": 2,
+        "pink": 2,
+        "yellow": 0,
+        "purple": 0
+      },
+      "evolutionLine": "nidoran_f",
+      "evolvesTo": "尼多后",
+      "evolveCost": {
+        "red": 0,
+        "blue": 0,
+        "black": 0,
+        "pink": 4,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 2,
+      "image": "assets/cards/nidorina_l2_b.png",
+      "source": {
+        "pdfPage": 14,
+        "position": "row1-col3"
+      }
+    },
+    {
+      "id": "pidgeotto_l2_b",
+      "name_zh": "比比鸟",
+      "name_en": "Pidgeotto",
+      "category": "normal",
+      "level": 2,
+      "points": 1,
+      "bonus": {
+        "color": "blue",
+        "count": 1
+      },
+      "cost": {
+        "red": 3,
+        "blue": 0,
+        "black": 0,
+        "pink": 2,
+        "yellow": 2,
+        "purple": 0
+      },
+      "evolutionLine": "pidgey",
+      "evolvesTo": "大比鸟",
+      "evolveCost": {
+        "red": 4,
+        "blue": 0,
+        "black": 0,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 2,
+      "image": "assets/cards/pidgeotto_l2_b.png",
+      "source": {
+        "pdfPage": 14,
+        "position": "row1-col4"
+      }
+    },
+    {
+      "id": "machoke_l2_b",
+      "name_zh": "豪力",
+      "name_en": "Machoke",
+      "category": "normal",
+      "level": 2,
+      "points": 2,
+      "bonus": {
+        "color": "red",
+        "count": 1
+      },
+      "cost": {
+        "red": 0,
+        "blue": 1,
+        "black": 2,
+        "pink": 0,
+        "yellow": 4,
+        "purple": 0
+      },
+      "evolutionLine": "machop",
+      "evolvesTo": "怪力",
+      "evolveCost": {
+        "red": 0,
+        "blue": 3,
+        "black": 0,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 2,
+      "image": "assets/cards/machoke_l2_b.png",
+      "source": {
+        "pdfPage": 14,
+        "position": "row1-col5"
+      }
+    },
+    {
+      "id": "kadabra_l2_b",
+      "name_zh": "勇基拉",
+      "name_en": "Kadabra",
+      "category": "normal",
+      "level": 2,
+      "points": 3,
+      "bonus": {
+        "color": "pink",
+        "count": 1
+      },
+      "cost": {
+        "red": 4,
+        "blue": 0,
+        "black": 1,
+        "pink": 0,
+        "yellow": 4,
+        "purple": 0
+      },
+      "evolutionLine": "abra",
+      "evolvesTo": "胡地",
+      "evolveCost": {
+        "red": 0,
+        "blue": 0,
+        "black": 4,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 2,
+      "image": "assets/cards/kadabra_l2_b.png",
+      "source": {
+        "pdfPage": 14,
+        "position": "row2-col1"
+      }
+    },
+    {
+      "id": "haunter_l2_b",
+      "name_zh": "鬼斯通",
+      "name_en": "Haunter",
+      "category": "normal",
+      "level": 2,
+      "points": 2,
+      "bonus": {
+        "color": "yellow",
+        "count": 1
+      },
+      "cost": {
+        "red": 1,
+        "blue": 0,
+        "black": 4,
+        "pink": 2,
+        "yellow": 0,
+        "purple": 0
+      },
+      "evolutionLine": "gastly",
+      "evolvesTo": "耿鬼",
+      "evolveCost": {
+        "red": 3,
+        "blue": 0,
+        "black": 0,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 2,
+      "image": "assets/cards/haunter_l2_b.png",
+      "source": {
+        "pdfPage": 14,
+        "position": "row2-col2"
+      }
+    },
+    {
+      "id": "graveler_l2_b",
+      "name_zh": "隆隆石",
+      "name_en": "Graveler",
+      "category": "normal",
+      "level": 2,
+      "points": 2,
+      "bonus": {
+        "color": "blue",
+        "count": 1
+      },
+      "cost": {
+        "red": 0,
+        "blue": 0,
+        "black": 1,
+        "pink": 4,
+        "yellow": 2,
+        "purple": 0
+      },
+      "evolutionLine": "geodude",
+      "evolvesTo": "隆隆岩",
+      "evolveCost": {
+        "red": 0,
+        "blue": 0,
+        "black": 3,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 2,
+      "image": "assets/cards/graveler_l2_b.png",
+      "source": {
+        "pdfPage": 14,
+        "position": "row2-col3"
+      }
+    },
+    {
+      "id": "weepinbell_l2_b",
+      "name_zh": "口呆花",
+      "name_en": "Weepinbell",
+      "category": "normal",
+      "level": 2,
+      "points": 1,
+      "bonus": {
+        "color": "red",
+        "count": 1
+      },
+      "cost": {
+        "red": 0,
+        "blue": 0,
+        "black": 2,
+        "pink": 3,
+        "yellow": 2,
+        "purple": 0
+      },
+      "evolutionLine": "bellsprout",
+      "evolvesTo": "大食花",
+      "evolveCost": {
+        "red": 0,
+        "blue": 0,
+        "black": 0,
+        "pink": 4,
+        "yellow": 0,
+        "purple": 0
+      },
+      "copyIndex": 2,
+      "image": "assets/cards/weepinbell_l2_b.png",
+      "source": {
+        "pdfPage": 14,
+        "position": "row2-col4"
+      }
+    },
+    {
+      "id": "gloom_l2_b",
+      "name_zh": "臭臭花",
+      "name_en": "Gloom",
+      "category": "normal",
+      "level": 2,
+      "points": 1,
+      "bonus": {
+        "color": "black",
+        "count": 1
+      },
+      "cost": {
+        "red": 2,
+        "blue": 2,
+        "black": 0,
+        "pink": 0,
+        "yellow": 3,
+        "purple": 0
+      },
+      "evolutionLine": "oddish",
+      "evolvesTo": "霸王花",
+      "evolveCost": {
+        "red": 0,
+        "blue": 0,
+        "black": 0,
+        "pink": 0,
+        "yellow": 4,
+        "purple": 0
+      },
+      "copyIndex": 2,
+      "image": "assets/cards/gloom_l2_b.png",
+      "source": {
+        "pdfPage": 14,
+        "position": "row2-col5"
+      }
+    },
+    {
+      "id": "dragonite_l3",
+      "name_zh": "快龙",
+      "name_en": "Dragonite",
+      "category": "normal",
+      "level": 3,
+      "points": 5,
+      "bonus": {
+        "color": "black",
+        "count": 1
+      },
+      "cost": {
+        "red": 0,
+        "blue": 3,
+        "black": 0,
+        "pink": 7,
+        "yellow": 0,
+        "purple": 0
+      },
+      "evolutionLine": "dratini",
+      "evolvesTo": null,
+      "evolveCost": null,
+      "copyIndex": 1,
+      "image": "assets/cards/dragonite_l3.png",
+      "source": {
+        "pdfPage": 16,
+        "position": "row1-col1"
+      }
+    },
+    {
+      "id": "butterfree_l3",
+      "name_zh": "巴大蝶",
+      "name_en": "Butterfree",
+      "category": "normal",
+      "level": 3,
+      "points": 4,
+      "bonus": {
+        "color": "pink",
+        "count": 1
+      },
+      "cost": {
+        "red": 0,
+        "blue": 6,
+        "black": 4,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "evolutionLine": "caterpie",
+      "evolvesTo": null,
+      "evolveCost": null,
+      "copyIndex": 1,
+      "image": "assets/cards/butterfree_l3.png",
+      "source": {
+        "pdfPage": 16,
+        "position": "row1-col2"
+      }
+    },
+    {
+      "id": "venusaur_l3",
+      "name_zh": "妙蛙花",
+      "name_en": "Venusaur",
+      "category": "normal",
+      "level": 3,
+      "points": 5,
+      "bonus": {
+        "color": "yellow",
+        "count": 1
+      },
+      "cost": {
+        "red": 7,
+        "blue": 0,
+        "black": 0,
+        "pink": 3,
+        "yellow": 0,
+        "purple": 0
+      },
+      "evolutionLine": "bulbasaur",
+      "evolvesTo": null,
+      "evolveCost": null,
+      "copyIndex": 1,
+      "image": "assets/cards/venusaur_l3.png",
+      "source": {
+        "pdfPage": 16,
+        "position": "row1-col3"
+      }
+    },
+    {
+      "id": "charizard_l3",
+      "name_zh": "喷火龙",
+      "name_en": "Charizard",
+      "category": "normal",
+      "level": 3,
+      "points": 5,
+      "bonus": {
+        "color": "blue",
+        "count": 1
+      },
+      "cost": {
+        "red": 0,
+        "blue": 0,
+        "black": 7,
+        "pink": 0,
+        "yellow": 3,
+        "purple": 0
+      },
+      "evolutionLine": "charmander",
+      "evolvesTo": null,
+      "evolveCost": null,
+      "copyIndex": 1,
+      "image": "assets/cards/charizard_l3.png",
+      "source": {
+        "pdfPage": 16,
+        "position": "row1-col4"
+      }
+    },
+    {
+      "id": "blastoise_l3",
+      "name_zh": "水箭龟",
+      "name_en": "Blastoise",
+      "category": "normal",
+      "level": 3,
+      "points": 5,
+      "bonus": {
+        "color": "red",
+        "count": 1
+      },
+      "cost": {
+        "red": 0,
+        "blue": 7,
+        "black": 3,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "evolutionLine": "squirtle",
+      "evolvesTo": null,
+      "evolveCost": null,
+      "copyIndex": 1,
+      "image": "assets/cards/blastoise_l3.png",
+      "source": {
+        "pdfPage": 16,
+        "position": "row1-col5"
+      }
+    },
+    {
+      "id": "beedrill_l3",
+      "name_zh": "大针蜂",
+      "name_en": "Beedrill",
+      "category": "normal",
+      "level": 3,
+      "points": 4,
+      "bonus": {
+        "color": "black",
+        "count": 1
+      },
+      "cost": {
+        "red": 6,
+        "blue": 0,
+        "black": 0,
+        "pink": 0,
+        "yellow": 4,
+        "purple": 0
+      },
+      "evolutionLine": "weedle",
+      "evolvesTo": null,
+      "evolveCost": null,
+      "copyIndex": 1,
+      "image": "assets/cards/beedrill_l3.png",
+      "source": {
+        "pdfPage": 16,
+        "position": "row2-col1"
+      }
+    },
+    {
+      "id": "poliwrath_l3",
+      "name_zh": "蚊香泳士",
+      "name_en": "Poliwrath",
+      "category": "normal",
+      "level": 3,
+      "points": 3,
+      "bonus": {
+        "color": "pink",
+        "count": 1
+      },
+      "cost": {
+        "red": 2,
+        "blue": 0,
+        "black": 0,
+        "pink": 5,
+        "yellow": 2,
+        "purple": 0
+      },
+      "evolutionLine": "poliwag",
+      "evolvesTo": null,
+      "evolveCost": null,
+      "copyIndex": 1,
+      "image": "assets/cards/poliwrath_l3.png",
+      "source": {
+        "pdfPage": 16,
+        "position": "row2-col2"
+      }
+    },
+    {
+      "id": "nidoqueen_l3",
+      "name_zh": "尼多后",
+      "name_en": "Nidoqueen",
+      "category": "normal",
+      "level": 3,
+      "points": 3,
+      "bonus": {
+        "color": "yellow",
+        "count": 1
+      },
+      "cost": {
+        "red": 2,
+        "blue": 0,
+        "black": 0,
+        "pink": 2,
+        "yellow": 5,
+        "purple": 0
+      },
+      "evolutionLine": "nidoran_f",
+      "evolvesTo": null,
+      "evolveCost": null,
+      "copyIndex": 1,
+      "image": "assets/cards/nidoqueen_l3.png",
+      "source": {
+        "pdfPage": 16,
+        "position": "row2-col3"
+      }
+    },
+    {
+      "id": "pidgeot_l3",
+      "name_zh": "大比鸟",
+      "name_en": "Pidgeot",
+      "category": "normal",
+      "level": 3,
+      "points": 3,
+      "bonus": {
+        "color": "blue",
+        "count": 1
+      },
+      "cost": {
+        "red": 0,
+        "blue": 5,
+        "black": 2,
+        "pink": 0,
+        "yellow": 2,
+        "purple": 0
+      },
+      "evolutionLine": "pidgey",
+      "evolvesTo": null,
+      "evolveCost": null,
+      "copyIndex": 1,
+      "image": "assets/cards/pidgeot_l3.png",
+      "source": {
+        "pdfPage": 16,
+        "position": "row2-col4"
+      }
+    },
+    {
+      "id": "machamp_l3",
+      "name_zh": "怪力",
+      "name_en": "Machamp",
+      "category": "normal",
+      "level": 3,
+      "points": 4,
+      "bonus": {
+        "color": "red",
+        "count": 1
+      },
+      "cost": {
+        "red": 0,
+        "blue": 0,
+        "black": 0,
+        "pink": 4,
+        "yellow": 6,
+        "purple": 0
+      },
+      "evolutionLine": "machop",
+      "evolvesTo": null,
+      "evolveCost": null,
+      "copyIndex": 1,
+      "image": "assets/cards/machamp_l3.png",
+      "source": {
+        "pdfPage": 16,
+        "position": "row2-col5"
+      }
+    },
+    {
+      "id": "vileplume_l3",
+      "name_zh": "霸王花",
+      "name_en": "Vileplume",
+      "category": "normal",
+      "level": 3,
+      "points": 3,
+      "bonus": {
+        "color": "black",
+        "count": 1
+      },
+      "cost": {
+        "red": 0,
+        "blue": 2,
+        "black": 5,
+        "pink": 2,
+        "yellow": 0,
+        "purple": 0
+      },
+      "evolutionLine": "oddish",
+      "evolvesTo": null,
+      "evolveCost": null,
+      "copyIndex": 1,
+      "image": "assets/cards/vileplume_l3.png",
+      "source": {
+        "pdfPage": 18,
+        "position": "row1-col1"
+      }
+    },
+    {
+      "id": "alakazam_l3",
+      "name_zh": "胡地",
+      "name_en": "Alakazam",
+      "category": "normal",
+      "level": 3,
+      "points": 5,
+      "bonus": {
+        "color": "pink",
+        "count": 1
+      },
+      "cost": {
+        "red": 3,
+        "blue": 0,
+        "black": 0,
+        "pink": 0,
+        "yellow": 7,
+        "purple": 0
+      },
+      "evolutionLine": "abra",
+      "evolvesTo": null,
+      "evolveCost": null,
+      "copyIndex": 1,
+      "image": "assets/cards/alakazam_l3.png",
+      "source": {
+        "pdfPage": 18,
+        "position": "row1-col2"
+      }
+    },
+    {
+      "id": "gengar_l3",
+      "name_zh": "耿鬼",
+      "name_en": "Gengar",
+      "category": "normal",
+      "level": 3,
+      "points": 4,
+      "bonus": {
+        "color": "yellow",
+        "count": 1
+      },
+      "cost": {
+        "red": 0,
+        "blue": 4,
+        "black": 6,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "evolutionLine": "gastly",
+      "evolvesTo": null,
+      "evolveCost": null,
+      "copyIndex": 1,
+      "image": "assets/cards/gengar_l3.png",
+      "source": {
+        "pdfPage": 18,
+        "position": "row1-col3"
+      }
+    },
+    {
+      "id": "golem_l3",
+      "name_zh": "隆隆岩",
+      "name_en": "Golem",
+      "category": "normal",
+      "level": 3,
+      "points": 4,
+      "bonus": {
+        "color": "blue",
+        "count": 1
+      },
+      "cost": {
+        "red": 4,
+        "blue": 0,
+        "black": 0,
+        "pink": 6,
+        "yellow": 0,
+        "purple": 0
+      },
+      "evolutionLine": "geodude",
+      "evolvesTo": null,
+      "evolveCost": null,
+      "copyIndex": 1,
+      "image": "assets/cards/golem_l3.png",
+      "source": {
+        "pdfPage": 18,
+        "position": "row1-col4"
+      }
+    },
+    {
+      "id": "victreebel_l3",
+      "name_zh": "大食花",
+      "name_en": "Victreebel",
+      "category": "normal",
+      "level": 3,
+      "points": 3,
+      "bonus": {
+        "color": "red",
+        "count": 1
+      },
+      "cost": {
+        "red": 5,
+        "blue": 2,
+        "black": 2,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 0
+      },
+      "evolutionLine": "bellsprout",
+      "evolvesTo": null,
+      "evolveCost": null,
+      "copyIndex": 1,
+      "image": "assets/cards/victreebel_l3.png",
+      "source": {
+        "pdfPage": 18,
+        "position": "row1-col5"
+      }
+    },
+    {
+      "id": "eevee_rare",
+      "name_zh": "伊布",
+      "name_en": "Eevee",
+      "category": "rare",
+      "level": null,
+      "points": 0,
+      "bonus": {
+        "color": "black",
+        "count": 2
+      },
+      "cost": {
+        "red": 2,
+        "blue": 0,
+        "black": 0,
+        "pink": 0,
+        "yellow": 3,
+        "purple": 1
+      },
+      "evolutionLine": null,
+      "evolvesTo": null,
+      "evolveCost": null,
+      "copyIndex": 1,
+      "image": "assets/cards/eevee_rare.png",
+      "source": {
+        "pdfPage": 20,
+        "position": "row1-col1"
+      }
+    },
+    {
+      "id": "snorlax_rare",
+      "name_zh": "卡比兽",
+      "name_en": "Snorlax",
+      "category": "rare",
+      "level": null,
+      "points": 0,
+      "bonus": {
+        "color": "pink",
+        "count": 2
+      },
+      "cost": {
+        "red": 3,
+        "blue": 0,
+        "black": 2,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 1
+      },
+      "evolutionLine": null,
+      "evolvesTo": null,
+      "evolveCost": null,
+      "copyIndex": 1,
+      "image": "assets/cards/snorlax_rare.png",
+      "source": {
+        "pdfPage": 20,
+        "position": "row1-col2"
+      }
+    },
+    {
+      "id": "aerodactyl_rare",
+      "name_zh": "化石翼龙",
+      "name_en": "Aerodactyl",
+      "category": "rare",
+      "level": null,
+      "points": 0,
+      "bonus": {
+        "color": "yellow",
+        "count": 2
+      },
+      "cost": {
+        "red": 0,
+        "blue": 3,
+        "black": 0,
+        "pink": 2,
+        "yellow": 0,
+        "purple": 1
+      },
+      "evolutionLine": null,
+      "evolvesTo": null,
+      "evolveCost": null,
+      "copyIndex": 1,
+      "image": "assets/cards/aerodactyl_rare.png",
+      "source": {
+        "pdfPage": 20,
+        "position": "row1-col3"
+      }
+    },
+    {
+      "id": "ditto_rare",
+      "name_zh": "百变怪",
+      "name_en": "Ditto",
+      "category": "rare",
+      "level": null,
+      "points": 0,
+      "bonus": {
+        "color": "blue",
+        "count": 2
+      },
+      "cost": {
+        "red": 0,
+        "blue": 0,
+        "black": 0,
+        "pink": 3,
+        "yellow": 2,
+        "purple": 1
+      },
+      "evolutionLine": null,
+      "evolvesTo": null,
+      "evolveCost": null,
+      "copyIndex": 1,
+      "image": "assets/cards/ditto_rare.png",
+      "source": {
+        "pdfPage": 20,
+        "position": "row1-col4"
+      }
+    },
+    {
+      "id": "lapras_rare",
+      "name_zh": "拉普拉斯",
+      "name_en": "Lapras",
+      "category": "rare",
+      "level": null,
+      "points": 0,
+      "bonus": {
+        "color": "red",
+        "count": 2
+      },
+      "cost": {
+        "red": 0,
+        "blue": 2,
+        "black": 3,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 1
+      },
+      "evolutionLine": null,
+      "evolvesTo": null,
+      "evolveCost": null,
+      "copyIndex": 1,
+      "image": "assets/cards/lapras_rare.png",
+      "source": {
+        "pdfPage": 20,
+        "position": "row1-col5"
+      }
+    },
+    {
+      "id": "mewtwo_legendary",
+      "name_zh": "超梦",
+      "name_en": "Mewtwo",
+      "category": "legendary",
+      "level": null,
+      "points": 2,
+      "bonus": {
+        "color": "black",
+        "count": 2
+      },
+      "cost": {
+        "red": 3,
+        "blue": 3,
+        "black": 0,
+        "pink": 3,
+        "yellow": 0,
+        "purple": 1
+      },
+      "evolutionLine": null,
+      "evolvesTo": null,
+      "evolveCost": null,
+      "copyIndex": 1,
+      "image": "assets/cards/mewtwo_legendary.png",
+      "source": {
+        "pdfPage": 20,
+        "position": "row2-col1"
+      }
+    },
+    {
+      "id": "moltres_legendary",
+      "name_zh": "火焰鸟",
+      "name_en": "Moltres",
+      "category": "legendary",
+      "level": null,
+      "points": 2,
+      "bonus": {
+        "color": "pink",
+        "count": 2
+      },
+      "cost": {
+        "red": 0,
+        "blue": 3,
+        "black": 3,
+        "pink": 0,
+        "yellow": 3,
+        "purple": 1
+      },
+      "evolutionLine": null,
+      "evolvesTo": null,
+      "evolveCost": null,
+      "copyIndex": 1,
+      "image": "assets/cards/moltres_legendary.png",
+      "source": {
+        "pdfPage": 20,
+        "position": "row2-col2"
+      }
+    },
+    {
+      "id": "articuno_legendary",
+      "name_zh": "急冻鸟",
+      "name_en": "Articuno",
+      "category": "legendary",
+      "level": null,
+      "points": 2,
+      "bonus": {
+        "color": "yellow",
+        "count": 2
+      },
+      "cost": {
+        "red": 3,
+        "blue": 0,
+        "black": 3,
+        "pink": 3,
+        "yellow": 0,
+        "purple": 1
+      },
+      "evolutionLine": null,
+      "evolvesTo": null,
+      "evolveCost": null,
+      "copyIndex": 1,
+      "image": "assets/cards/articuno_legendary.png",
+      "source": {
+        "pdfPage": 20,
+        "position": "row2-col3"
+      }
+    },
+    {
+      "id": "mew_legendary",
+      "name_zh": "梦幻",
+      "name_en": "Mew",
+      "category": "legendary",
+      "level": null,
+      "points": 2,
+      "bonus": {
+        "color": "blue",
+        "count": 2
+      },
+      "cost": {
+        "red": 3,
+        "blue": 0,
+        "black": 3,
+        "pink": 0,
+        "yellow": 3,
+        "purple": 1
+      },
+      "evolutionLine": null,
+      "evolvesTo": null,
+      "evolveCost": null,
+      "copyIndex": 1,
+      "image": "assets/cards/mew_legendary.png",
+      "source": {
+        "pdfPage": 20,
+        "position": "row2-col4"
+      }
+    },
+    {
+      "id": "zapdos_legendary",
+      "name_zh": "闪电鸟",
+      "name_en": "Zapdos",
+      "category": "legendary",
+      "level": null,
+      "points": 2,
+      "bonus": {
+        "color": "red",
+        "count": 2
+      },
+      "cost": {
+        "red": 0,
+        "blue": 3,
+        "black": 0,
+        "pink": 3,
+        "yellow": 3,
+        "purple": 1
+      },
+      "evolutionLine": null,
+      "evolvesTo": null,
+      "evolveCost": null,
+      "copyIndex": 1,
+      "image": "assets/cards/zapdos_legendary.png",
+      "source": {
+        "pdfPage": 20,
+        "position": "row2-col5"
+      }
+    }
+  ],
+  "optionalAlternateCards": [
+    {
+      "id": "psyduck_alt_rare",
+      "name_zh": "可达鸭",
+      "name_en": "Psyduck",
+      "category": "rare_alt",
+      "level": null,
+      "points": 0,
+      "bonus": {
+        "color": "pink",
+        "count": 2
+      },
+      "cost": {
+        "red": 3,
+        "blue": 0,
+        "black": 2,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 1
+      },
+      "evolutionLine": null,
+      "evolvesTo": null,
+      "evolveCost": null,
+      "copyIndex": 1,
+      "image": "assets/cards/psyduck_alt_rare.png",
+      "source": {
+        "pdfPage": 22,
+        "position": "row1-col2"
+      }
+    },
+    {
+      "id": "pikachu_alt_rare",
+      "name_zh": "皮卡丘",
+      "name_en": "Pikachu",
+      "category": "rare_alt",
+      "level": null,
+      "points": 0,
+      "bonus": {
+        "color": "yellow",
+        "count": 2
+      },
+      "cost": {
+        "red": 0,
+        "blue": 3,
+        "black": 0,
+        "pink": 2,
+        "yellow": 0,
+        "purple": 1
+      },
+      "evolutionLine": null,
+      "evolvesTo": null,
+      "evolveCost": null,
+      "copyIndex": 1,
+      "image": "assets/cards/pikachu_alt_rare.png",
+      "source": {
+        "pdfPage": 22,
+        "position": "row1-col3"
+      }
+    },
+    {
+      "id": "wobbuffet_alt_rare",
+      "name_zh": "果然翁",
+      "name_en": "Wobbuffet",
+      "category": "rare_alt",
+      "level": null,
+      "points": 0,
+      "bonus": {
+        "color": "blue",
+        "count": 2
+      },
+      "cost": {
+        "red": 0,
+        "blue": 0,
+        "black": 0,
+        "pink": 3,
+        "yellow": 2,
+        "purple": 1
+      },
+      "evolutionLine": null,
+      "evolvesTo": null,
+      "evolveCost": null,
+      "copyIndex": 1,
+      "image": "assets/cards/wobbuffet_alt_rare.png",
+      "source": {
+        "pdfPage": 22,
+        "position": "row1-col4"
+      }
+    },
+    {
+      "id": "meowth_alt_rare",
+      "name_zh": "喵喵",
+      "name_en": "Meowth",
+      "category": "rare_alt",
+      "level": null,
+      "points": 0,
+      "bonus": {
+        "color": "red",
+        "count": 2
+      },
+      "cost": {
+        "red": 0,
+        "blue": 2,
+        "black": 3,
+        "pink": 0,
+        "yellow": 0,
+        "purple": 1
+      },
+      "evolutionLine": null,
+      "evolvesTo": null,
+      "evolveCost": null,
+      "copyIndex": 1,
+      "image": "assets/cards/meowth_alt_rare.png",
+      "source": {
+        "pdfPage": 22,
+        "position": "row1-col5"
+      }
+    },
+    {
+      "id": "eevee_alt_rare",
+      "name_zh": "伊布",
+      "name_en": "Eevee",
+      "category": "rare_alt",
+      "level": null,
+      "points": 0,
+      "bonus": {
+        "color": "black",
+        "count": 2
+      },
+      "cost": {
+        "red": 2,
+        "blue": 0,
+        "black": 0,
+        "pink": 0,
+        "yellow": 3,
+        "purple": 1
+      },
+      "evolutionLine": null,
+      "evolvesTo": null,
+      "evolveCost": null,
+      "copyIndex": 1,
+      "image": "assets/cards/eevee_alt_rare.png",
+      "source": {
+        "pdfPage": 22,
+        "position": "row1-col1"
+      }
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "name": "pokemon-splendor",
+  "version": "0.9.3",
+  "description": "宝可梦璀璨宝石桌游 - 单机 + 局域网联机 + Render 公网部署",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.0",
+    "socket.io": "^4.7.0"
+  }
+}
