@@ -3806,7 +3806,7 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
       return `
         <section class="market-row">
           <div class="market-heading">
-            <h3>${MARKET_LABELS[key]} 级卡</h3>
+            <h3>${MARKET_LABELS[key]}卡</h3>
             <span class="market-pile ${canBlindReserve ? "clickable" : ""}" ${canBlindReserve ? `data-blind-reserve="${key}" title="点击盲抽保留"` : ""}>牌堆 ${deckCount}${canBlindReserve ? " ▸" : ""}</span>
           </div>
           <div class="card-grid">
@@ -4254,6 +4254,20 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
     const dataAttrs = selectable
       ? `data-card-id="${escapeHtml(card.id)}" data-card-source="${source}" data-market-key="${marketKey}"`
       : "";
+    // v0.9.5.2 公共区 compact 模式：source === "market" 时只渲染卡图，文字详情交给 selected-card-panel
+    // reserved / tableau 保持原有完整渲染，不受影响
+    if (source === "market") {
+      const cardName = getCardName(card);
+      const cardTypeLabel = cardTypeText(card);
+      const points = Number(card.points) || 0;
+      // 轻量 tooltip：仅 hover 时显示卡名 + 等级 + 分数
+      const tooltip = `${cardName} | ${cardTypeLabel}${points ? ` | ${points}分` : ""}`;
+      return `
+        <article class="${getCardVisualClasses(card, source, marketKey)}" ${dataAttrs} title="${escapeHtml(tooltip)}">
+          ${card.image ? buildImgTagWithFallback(getCardThumbnailPath(card.image), { className: "card-image", alt: cardName, loading: "lazy", decoding: "async", fallbackSrc: card.image }) : ""}
+        </article>
+      `;
+    }
     return `
       <article class="${getCardVisualClasses(card, source, marketKey)}" ${dataAttrs}>
         ${card.image ? buildImgTagWithFallback(getCardThumbnailPath(card.image), { className: "card-image", alt: getCardName(card), loading: "lazy", decoding: "async", fallbackSrc: card.image }) : ""}

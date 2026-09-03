@@ -1,18 +1,20 @@
 :root {
   --bg: #f4f7f6;
-  --panel: #ffffff;
+  --panel: rgba(255, 255, 255, 0.88);
+  --panel-solid: rgba(255, 255, 255, 0.92);
   --ink: #1d2a2f;
   --muted: #66757b;
-  --line: #d7e0df;
+  --line: rgba(215, 224, 223, 0.85);
   --accent: #1b7f79;
   --accent-dark: #135d59;
   --danger: #b44646;
   --warn: #9b6b1d;
-  --shadow: 0 10px 30px rgba(29, 42, 47, 0.08);
-  --radius: 8px;
+  --shadow: 0 2px 12px rgba(29, 42, 47, 0.08);
+  --radius: 10px;
   --public-card-width: 145px;
   --public-card-gap: 12px;
-  --topbar-height: 56px;
+  --topbar-height: 48px;
+  --panel-blur: blur(4px);
 }
 
 * {
@@ -27,10 +29,21 @@ html, body {
 
 body {
   overflow: hidden;
-  background: var(--bg);
+  background: linear-gradient(rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.12)), url("assets/backgrounds/pokemon-game-bg.webp") center center / cover fixed no-repeat;
+  background-color: var(--bg);
   color: var(--ink);
   font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", Arial, sans-serif;
   line-height: 1.45;
+}
+
+/* 背景遮罩层：极轻白色蒙版，提升文字可读性，不拦截点击 */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.08);
+  pointer-events: none;
+  z-index: -1;
 }
 
 button,
@@ -126,10 +139,12 @@ p {
   gap: 12px;
   height: var(--topbar-height);
   padding: 0 16px;
-  background: #fff;
-  border-bottom: 1px solid var(--line);
+  background: rgba(245, 252, 250, 0.90);
+  border-bottom: 1px solid rgba(215, 224, 223, 0.65);
   flex-shrink: 0;
   z-index: 10;
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
 }
 
 .top-left {
@@ -241,11 +256,13 @@ p {
 
 .panel {
   background: var(--panel);
-  border: 1px solid var(--line);
+  border: 1px solid rgba(255, 255, 255, 0.65);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: 12px;
   min-height: 0;
+  -webkit-backdrop-filter: var(--panel-blur);
+  backdrop-filter: var(--panel-blur);
 }
 
 /* ============ SCREENS (load / start) ============ */
@@ -292,7 +309,7 @@ p {
   height: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 170px 260px 150px 280px;
-  grid-template-rows: minmax(0, 1fr) 150px;
+  grid-template-rows: minmax(0, 1fr) 180px;
   gap: 8px;
   min-height: 0;
   overflow: hidden;
@@ -328,6 +345,10 @@ p {
   gap: 8px;
   overflow: hidden;
   min-height: 0;
+  /* v0.9.5.2: 公共区面板半透明白底，让卡牌比背景更突出，背景仍可见 */
+  background: rgba(255, 255, 255, 0.88);
+  border-radius: var(--radius);
+  padding: 6px;
 }
 
 .public-board > .card-legend {
@@ -348,6 +369,7 @@ p {
   flex-direction: column;
   min-height: 0;
   overflow: hidden;
+  background: rgba(255, 255, 255, 0.93);
 }
 
 .supply-column h3 {
@@ -510,16 +532,16 @@ p {
   display: grid;
   gap: 4px;
   padding: 10px;
-  border: 2px solid var(--line);
+  border: 2px solid rgba(215, 224, 223, 0.75);
   border-radius: var(--radius);
-  background: #fff;
+  background: rgba(255, 255, 255, 0.92);
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .player-sidebar-card.is-current {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(27, 127, 121, 0.15);
-  background: #f8fcfb;
+  background: rgba(248, 252, 251, 0.95);
 }
 
 .player-sidebar-card.winner {
@@ -722,8 +744,9 @@ p {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  max-height: 150px;
+  max-height: 180px;
   overflow: hidden;
+  background: rgba(255, 255, 255, 0.89);
 }
 
 .bp-header {
@@ -784,6 +807,7 @@ p {
   max-height: 150px;
   overflow: hidden;
   padding: 8px;
+  background: rgba(255, 255, 255, 0.93);
 }
 
 .action-log h3 {
@@ -834,6 +858,7 @@ p {
   flex-direction: column;
   min-height: 0;
   overflow: hidden;
+  background: rgba(255, 255, 255, 0.93);
 }
 
 .selected-card-panel h3 {
@@ -996,12 +1021,13 @@ p {
 
 .card-grid {
   display: grid;
-  grid-template-columns: repeat(4, var(--public-card-width));
+  /* v0.9.5.3: 改用 minmax(0,1fr) 让 4 张卡严格横向对齐，3 层上下也对齐同一列 */
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   justify-content: center;
-  align-content: center;
-  align-items: center;
+  align-content: stretch;
+  align-items: stretch;
   gap: var(--public-card-gap);
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
   overflow-x: auto;
   overflow-y: hidden;
@@ -1027,26 +1053,44 @@ p {
 .special-slot {
   min-height: 0;
   overflow: hidden;
+  /* v0.9.5.3: 卡图真正居中，减少无效留白 */
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .special-slot h4 {
   font-size: 11px;
-  margin: 0 0 4px;
+  margin: 0 0 2px;
   font-weight: 700;
   flex-shrink: 0;
 }
 
 .special-slot .card {
-  width: 100%;
-  max-width: 150px;
+  /* v0.9.5.3: 卡宽跟随卡图自适应，不再固定 max-width:150px 制造白色空间 */
+  width: auto;
+  max-width: 100%;
   min-height: 0;
-  padding: 4px;
+  padding: 3px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.35);
+  border-radius: 7px;
 }
 
-.special-slot .card img {
-  max-height: 140px;
+.special-slot .card .card-image {
+  width: auto;
+  /* v0.9.5.3: rare/legend 进一步突出（160→170 下限，210→215 上限，20vh→21vh） */
+  height: clamp(170px, 21vh, 215px);
+  max-height: clamp(170px, 21vh, 215px);
+  max-width: 100%;
+  object-fit: contain;
+  object-position: center;
+  display: block;
+  margin: auto;
 }
 
 /* ============ CARD ============ */
@@ -1064,16 +1108,39 @@ p {
 }
 
 .main-board .card {
-  width: var(--public-card-width);
-  min-width: var(--public-card-width);
-  max-width: var(--public-card-width);
+  /* v0.9.5.3: 取消固定 width/max-width，让卡填满 grid 1fr 单元格 */
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   min-height: 0;
-  padding: 5px;
-  gap: 3px;
-  display: grid;
-  grid-template-rows: auto auto auto auto auto;
-  justify-items: center;
+  height: 100%;
+  padding: 3px;
+  gap: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.35);
+  border-radius: 7px;
+}
+
+/* v0.9.5.2/5.3: 公共区 compact 模式 — 仅普通市场卡（normal-board）卡图占据全部容器 */
+/* 使用 .normal-board 而非 .main-board 限定作用域，避免覆盖 .special-slot 的 rare/legend 尺寸规则 */
+/* v0.9.5.3: 普通卡再放大约 8%~12%（145→150 下限，180→192 上限，17vh→18vh） */
+.normal-board .card .card-image {
+  flex: 0 0 auto;
+  min-height: 0;
+  width: auto;
+  height: clamp(150px, 18vh, 192px);
+  max-height: clamp(150px, 18vh, 192px);
+  max-width: 100%;
+  object-fit: contain;
+  object-position: center;
+  display: block;
+  margin: auto;
+  flex-shrink: 0;
 }
 
 .card:hover {
@@ -1109,8 +1176,9 @@ p {
 .card img {
   width: 100%;
   max-width: 100%;
-  aspect-ratio: 1441 / 2150;
+  max-height: clamp(105px, 11.5vh, 140px);
   object-fit: contain;
+  object-position: center;
   display: block;
   margin: 0 auto;
   border-radius: 6px;
@@ -1140,8 +1208,8 @@ p {
   animation: img-skeleton 1.4s ease-in-out 1;
 }
 
+/* v0.9.5.2: 公共区 compact 模式 — 公共卡图片尺寸由 .main-board .card .card-image 控制（更大），不再用此旧规则限制 */
 .main-board .card img {
-  max-height: 150px;
   width: auto;
   max-width: 100%;
   margin: 0 auto;
@@ -2660,6 +2728,66 @@ body.mobile-portrait::before {
   }
   .bp-body {
     grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ============ v0.9.5.1 公共区卡牌完整显示 ============ */
+
+/* 1920×1080 100%缩放：确保三行公共卡完整 */
+@media (min-width: 1600px) and (min-height: 900px) {
+  .card img {
+    max-height: clamp(110px, 12vh, 135px);
+  }
+  .special-slot .card img {
+    max-height: clamp(95px, 10.5vh, 115px);
+  }
+}
+
+/* 1366×768 等小屏：压缩卡图和字体 */
+@media (max-height: 800px) {
+  .card img {
+    max-height: 88px;
+  }
+  .special-slot .card img {
+    max-height: 78px;
+  }
+  .market-heading h3 {
+    font-size: 11px;
+  }
+  .card-name,
+  .card-meta,
+  .card-bonus,
+  .card-cost {
+    font-size: 10px;
+  }
+}
+
+/* ============ v0.9.5 宝可梦背景：响应式调整 ============ */
+
+/* 中等屏幕：右移背景焦点，避免右侧宝可梦群被裁掉 */
+@media (max-width: 1399px) and (min-width: 901px) {
+  body {
+    background-position: 60% center;
+  }
+}
+
+/* 小屏/手机：提高面板透明度保证可读性，背景定位偏上 */
+@media (max-width: 900px) {
+  body {
+    background-position: center top;
+  }
+  .panel,
+  .selected-card-panel,
+  .supply-column,
+  .bottom-player-area,
+  .action-log {
+    background: rgba(255, 255, 255, 0.95);
+  }
+  .top-bar {
+    background: rgba(245, 252, 250, 0.96);
+  }
+  .player-sidebar-card {
+    background: rgba(255, 255, 255, 0.96);
   }
 }
 
