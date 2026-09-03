@@ -104,7 +104,17 @@ app.get("/socket.io/socket.io.js", (req, res, next) => {
   res.sendFile(clientPath);
 });
 
-// 静态文件服务（简化，不再附加 extensions 选项）
+// 静态文件服务
+// v0.9.4: /assets 单独配置 7 天缓存（图片资源不变，可长期缓存）
+app.use(
+  "/assets",
+  express.static(path.join(__dirname, "assets"), {
+    maxAge: "7d",
+    etag: true,
+    lastModified: true
+  })
+);
+// 其他静态文件（index.html / game.js / online.js 等）不设置长缓存
 app.use(express.static(__dirname));
 
 // =============================

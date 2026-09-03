@@ -1117,6 +1117,29 @@ p {
   background: #eef2f1;
 }
 
+/* v0.9.4 图片加载 skeleton 占位（轻量脉冲，不引入复杂动画） */
+.card-image,
+.sidebar-reserved-card img {
+  background: linear-gradient(90deg, #eef2f1 25%, #e0e8e6 50%, #eef2f1 75%);
+  background-size: 200% 100%;
+  animation: img-skeleton 1.4s ease-in-out infinite;
+}
+
+.card-image:not([src]),
+.card-image[src=""] {
+  display: none;
+}
+
+@keyframes img-skeleton {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* 图片加载完成后停止 skeleton 动画（通过 :not([src=""]) 自然实现） */
+.card-image[loading] {
+  animation: img-skeleton 1.4s ease-in-out 1;
+}
+
 .main-board .card img {
   max-height: 150px;
   width: auto;

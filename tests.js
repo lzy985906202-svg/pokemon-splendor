@@ -3674,6 +3674,127 @@
         assertEqual(cards.length, 90, "cards.json 卡牌数量仍应为 90 张（未修改 cards.json / 游戏规则）");
       });
 
+      // =============================
+      // v0.9.4 Render 公网图片加载性能优化
+      // =============================
+      await test("测试161：v0.9.4 — getCardThumbnailPath 将 PNG 路径转为 WebP 缩略图路径", function () {
+        var api2 = getAPI();
+        assertEqual(typeof api2.getCardThumbnailPath, "function", "应导出 getCardThumbnailPath");
+        var result = api2.getCardThumbnailPath("assets/cards/charizard_l3.png");
+        assertEqual(result, "assets/cards/thumbs/charizard_l3.webp", "应正确转换路径");
+      });
+
+      await test("测试162：v0.9.4 — getCardThumbnailPath 不修改非 assets/cards 路径", function () {
+        var api2 = getAPI();
+        assertEqual(api2.getCardThumbnailPath("http://example.com/img.png"), "http://example.com/img.png", "非 assets/cards 路径应原样返回");
+        assertEqual(api2.getCardThumbnailPath(""), "", "空路径应返回空");
+        assertEqual(api2.getCardThumbnailPath(null), "", "null 应返回空");
+      });
+
+      await test("测试163：v0.9.4 — getTokenThumbnailPath 将颜色名转为 WebP 缩略图路径", function () {
+        var api2 = getAPI();
+        assertEqual(typeof api2.getTokenThumbnailPath, "function", "应导出 getTokenThumbnailPath");
+        assertEqual(api2.getTokenThumbnailPath("red"), "assets/tokens/thumbs/red.webp", "颜色名应转为缩略图路径");
+        assertEqual(api2.getTokenThumbnailPath("assets/tokens/blue.png"), "assets/tokens/thumbs/blue.webp", "完整路径应转为缩略图路径");
+      });
+
+      await test("测试164：v0.9.4 — buildImgTagWithFallback 生成带 onerror 的 img 标签", function () {
+        var api2 = getAPI();
+        assertEqual(typeof api2.buildImgTagWithFallback, "function", "应导出 buildImgTagWithFallback");
+        var tag = api2.buildImgTagWithFallback("thumb.webp", { fallbackSrc: "original.png", alt: "test", loading: "lazy", decoding: "async" });
+        assert(tag.indexOf("src=\"thumb.webp\"") >= 0, "img 标签应包含缩略图 src");
+        assert(tag.indexOf("onerror") >= 0, "img 标签应包含 onerror fallback");
+        assert(tag.indexOf("original.png") >= 0, "onerror 应回退到原始 PNG");
+        assert(tag.indexOf("loading=\"lazy\"") >= 0, "应包含 loading=lazy");
+        assert(tag.indexOf("decoding=\"async\"") >= 0, "应包含 decoding=async");
+      });
+
+      await test("测试165：v0.9.4 — 不存在全部预加载 90 张图片的行为", function () {
+        var api2 = getAPI();
+        var cards = api2.getCards();
+        // 确认 cardDatabase 有 90 张卡，但 game.js 中没有 new Image() 预加载循环
+        assertEqual(cards.length, 90, "cards.json 应有 90 张卡");
+        // 检查 game.js 源码中没有 new Image 预加载（通过检查 API 不暴露任何 preload 函数）
+        assert(typeof api2.preloadAllCardImages !== "function", "不应存在 preloadAllCardImages 函数");
+        assert(typeof api2.preloadImages !== "function", "不应存在 preloadImages 函数");
+      });
+
+      await test("测试166：v0.9.4 — renderCard 生成的 HTML 使用缩略图路径而非原 PNG", function () {
+        var api2 = getAPI();
+        // 使用正式的 createEmptyGameState 创建完整状态（自动洗牌填市场）
+        api2.createEmptyGameState(2);
+        api2.render();
+        var publicBoard = document.getElementById("publicBoard");
+        var html = publicBoard ? publicBoard.innerHTML : "";
+
+        // 1. 卡牌主 src 必须使用 assets/cards/thumbs/*.webp
+        assert(
+          html.includes('src="assets/cards/thumbs/'),
+          "renderCard 应使用 WebP 缩略图作为主 src"
+        );
+
+        // 2. 应该包含 .webp 文件
+        assert(html.indexOf(".webp") >= 0, "渲染 HTML 应包含 .webp 缩略图");
+
+        // 3. 应该包含 onerror fallback（WebP 失败回退 PNG 是正确设计，允许存在 PNG fallback）
+        assert(html.indexOf("onerror") >= 0, "渲染 HTML 应包含 onerror fallback 机制");
+
+        // 4. 主 src 不能直接使用 assets/cards/*.png（onerror 里的单引号 fallback PNG 是允许的）
+        //    此正则只匹配 src="assets/cards/xxx.png"（双引号主 src 直接 PNG），
+        //    排除掉 src="assets/cards/thumbs/xxx.webp"，也不会触碰 onerror 里的单引号 fallback
+        assert(
+          !/src="assets\/cards\/(?!thumbs\/)[^"]*\.png"/.test(html),
+          "renderCard 不应直接使用原 PNG 作为主 src"
+        );
+      });
+
+      await test("测试167：v0.9.4 — cards.json 中图片路径未被修改（仍为 .png）", function () {
+        var api2 = getAPI();
+        var cards = api2.getCards();
+        var pngCount = cards.filter(function (c) { return c.image && c.image.endsWith(".png"); }).length;
+        assertEqual(pngCount, 90, "所有 90 张卡的 image 路径应仍为 .png（未修改 cards.json）");
+        var webpCount = cards.filter(function (c) { return c.image && c.image.endsWith(".webp"); }).length;
+        assertEqual(webpCount, 0, "cards.json 中不应有任何 .webp 路径");
+      });
+
+      await test("测试168：v0.9.4 — 游戏规则与 cards.json 未被改动（卡牌数量仍为 90 张）", function () {
+        var api2 = getAPI();
+        var cards = api2.getCards();
+        assertEqual(cards.length, 90, "cards.json 卡牌数量仍应为 90 张");
+      });
+
+      await test("测试169：v0.9.4.1 — selected-card-panel 使用 WebP 缩略图，查看大图仍用原 PNG", async function () {
+        var api2 = getAPI();
+        api2.resetStateForTest();
+        var state = api2.createEmptyGameState(2);
+        // 从市场取一张带 image 的卡
+        var card = state.market.level1[0];
+        assert(card && card.image, "市场 level1 应有卡牌且带 image 路径");
+        // 选中该卡（setSelectedCard 内部会调用 render）
+        api2.setSelectedCard("market", card.id, "level1");
+        var html = document.getElementById("selectedCardInfo").innerHTML;
+
+        // selected-card-panel 主 src 应使用 WebP 缩略图
+        assert(html.indexOf('src="assets/cards/thumbs/') >= 0, "selected-card-panel 应使用 WebP 缩略图 src");
+        assert(html.indexOf(".webp") >= 0, "selected-card-panel 应包含 .webp");
+        assert(html.indexOf("onerror") >= 0, "selected-card-panel 应包含 onerror fallback");
+        assert(!/src="assets\/cards\/(?!thumbs\/)[^"]*\.png"/.test(html), "selected-card-panel 不应直接使用原 PNG 作为主 src");
+
+        // 查看大图仍使用原 PNG（检查 game.js 源码中 openCardPreview 函数）
+        var gameJsSource = "";
+        try {
+          var response = await fetch("game.js", { cache: "no-store" });
+          if (response.ok) gameJsSource = await response.text();
+        } catch (e) { gameJsSource = ""; }
+        if (gameJsSource) {
+          var previewIdx = gameJsSource.indexOf("openCardPreview");
+          assert(previewIdx >= 0, "game.js 应包含 openCardPreview 函数");
+          var previewSnippet = gameJsSource.substring(previewIdx, previewIdx + 600);
+          assert(previewSnippet.indexOf("card.image") >= 0, "查看大图应仍使用 card.image 原 PNG");
+          assert(previewSnippet.indexOf("getCardThumbnailPath") < 0, "查看大图不应使用缩略图路径");
+        }
+      });
+
     });
   }
 

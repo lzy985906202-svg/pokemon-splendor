@@ -225,12 +225,17 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
     const size = options.size || "small";
     const parts = colors
       .filter((color) => includeZero || (Number(safeTokens[color]) || 0) > 0)
-      .map((color) => `
+      .map((color) => {
+        const originalSrc = `assets/tokens/${color}.png`;
+        const thumbSrc = getTokenThumbnailPath(color);
+        const imgTag = buildImgTagWithFallback(thumbSrc, { alt: TOKEN_LABELS[color], loading: "lazy", decoding: "async", fallbackSrc: originalSrc });
+        return `
         <span class="token-icon-token token-icon-${size}" data-token-color="${color}">
-          <img src="assets/tokens/${color}.png" alt="${escapeHtml(TOKEN_LABELS[color])}">
+          ${imgTag}
           <span>${Number(safeTokens[color]) || 0}</span>
         </span>
-      `);
+      `;
+      });
     return parts.length ? parts.join("") : `<span class="muted">无</span>`;
   }
 
@@ -391,6 +396,49 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
     if (/^10\./.test(host)) return true;
     if (/^172\.(1[6-9]|2[0-9]|3[01])\./.test(host)) return true;
     return false;
+  }
+
+  // v0.9.4 卡牌缩略图路径转换（assets/cards/xxx.png → assets/cards/thumbs/xxx.webp）
+  // 不修改 cards.json 中的原始路径，仅在渲染时用缩略图；查看大图时仍用原 PNG
+  function getCardThumbnailPath(imagePath) {
+    const p = String(imagePath || "");
+    if (!p) return p;
+    // 仅对 assets/cards/*.png 转换
+    if (p.indexOf("assets/cards/") === 0 && p.toLowerCase().endsWith(".png")) {
+      const baseName = p.substring("assets/cards/".length, p.length - ".png".length);
+      return `assets/cards/thumbs/${baseName}.webp`;
+    }
+    return p;
+  }
+
+  // v0.9.4 Token 缩略图路径转换（assets/tokens/xxx.png → assets/tokens/thumbs/xxx.webp）
+  function getTokenThumbnailPath(colorOrPath) {
+    const p = String(colorOrPath || "");
+    if (!p) return p;
+    // 传入的是颜色名（如 "red"）→ 转为 assets/tokens/thumbs/red.webp
+    if (p.indexOf("/") < 0 && p.indexOf("\\") < 0 && p.indexOf(".") < 0) {
+      return `assets/tokens/thumbs/${p}.webp`;
+    }
+    // 传入的是完整路径
+    if (p.indexOf("assets/tokens/") === 0 && p.toLowerCase().endsWith(".png")) {
+      const baseName = p.substring("assets/tokens/".length, p.length - ".png".length);
+      return `assets/tokens/thumbs/${baseName}.webp`;
+    }
+    return p;
+  }
+
+  // v0.9.4 生成带 onerror fallback 的 img 标签（缩略图加载失败时回退到原 PNG）
+  function buildImgTagWithFallback(src, options) {
+    const opts = options || {};
+    const cls = opts.className ? ` class="${escapeHtml(opts.className)}"` : "";
+    const alt = opts.alt ? ` alt="${escapeHtml(opts.alt)}"` : "";
+    const loading = opts.loading ? ` loading="${escapeHtml(opts.loading)}"` : "";
+    const decoding = opts.decoding ? ` decoding="${escapeHtml(opts.decoding)}"` : "";
+    // onerror: 清除自身 onerror 防止无限循环，然后回退到原始路径
+    const onerror = opts.fallbackSrc
+      ? ` onerror="this.onerror=null;this.src='${escapeHtml(opts.fallbackSrc)}'"`
+      : "";
+    return `<img${cls} src="${escapeHtml(src)}"${alt}${loading}${decoding}${onerror}>`;
   }
 
   // v0.9.2 联机重连纯逻辑（供 server.js 与测试复用）
@@ -3463,7 +3511,7 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
               const classes = ["sidebar-reserved-card", isOwn ? "own" : "opponent"];
               return `
                 <div class="${classes.join(" ")}" data-reserved-card-id="${escapeHtml(card.id)}" data-player-index="${idx}">
-                  ${card.image ? `<img src="${escapeHtml(card.image)}" alt="${escapeHtml(getCardName(card))}">` : ""}
+                  ${card.image ? buildImgTagWithFallback(getCardThumbnailPath(card.image), { alt: getCardName(card), loading: "lazy", decoding: "async", fallbackSrc: card.image }) : ""}
                   <div class="sidebar-reserved-card-name">${escapeHtml(getCardName(card))}</div>
                   <div class="sidebar-reserved-card-meta">${Number(card.points) || 0}分</div>
                 </div>
@@ -3865,7 +3913,7 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
 
   function renderSelectedCardOnlyHtml(ref) {
     const imageHtml = ref.card.image
-      ? `<img src="${escapeHtml(ref.card.image)}" alt="${escapeHtml(getCardName(ref.card))}" class="selected-card-img">`
+      ? buildImgTagWithFallback(getCardThumbnailPath(ref.card.image), { className: "selected-card-img", alt: getCardName(ref.card), loading: "lazy", decoding: "async", fallbackSrc: ref.card.image })
       : "";
     return `
       <hr style="margin: 10px 0; border: none; border-top: 1px solid var(--line);">
@@ -3920,7 +3968,7 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
       // 如果有选中卡，也显示详情
       if (ref) {
         const imageHtml = ref.card.image
-          ? `<img src="${escapeHtml(ref.card.image)}" alt="${escapeHtml(getCardName(ref.card))}" class="selected-card-img">`
+          ? buildImgTagWithFallback(getCardThumbnailPath(ref.card.image), { className: "selected-card-img", alt: getCardName(ref.card), loading: "lazy", decoding: "async", fallbackSrc: ref.card.image })
           : "";
         evolveHtml = `
           ${imageHtml}
@@ -3955,7 +4003,7 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
     if (ref.source === "opponentReserved") {
       const ownerName = gameState.players[ref.ownerIndex]?.name || "其他玩家";
       const imageHtml = ref.card.image
-        ? `<img src="${escapeHtml(ref.card.image)}" alt="${escapeHtml(getCardName(ref.card))}" class="selected-card-img">`
+        ? buildImgTagWithFallback(getCardThumbnailPath(ref.card.image), { className: "selected-card-img", alt: getCardName(ref.card), loading: "lazy", decoding: "async", fallbackSrc: ref.card.image })
         : "";
       els.selectedCardInfo.innerHTML = `
         ${imageHtml}
@@ -3982,7 +4030,7 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
     const requiredPurpleOnly = Math.max(0, rawCost.purple - info.discount.purple);
     const usesPurpleAsSubstitute = info.payable && info.payCost.purple > requiredPurpleOnly;
     const imageHtml = ref.card.image
-      ? `<img src="${escapeHtml(ref.card.image)}" alt="${escapeHtml(getCardName(ref.card))}" class="selected-card-img">`
+      ? buildImgTagWithFallback(getCardThumbnailPath(ref.card.image), { className: "selected-card-img", alt: getCardName(ref.card), loading: "lazy", decoding: "async", fallbackSrc: ref.card.image })
       : "";
 
     // 操作按钮
@@ -4208,7 +4256,7 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
       : "";
     return `
       <article class="${getCardVisualClasses(card, source, marketKey)}" ${dataAttrs}>
-        ${card.image ? `<img class="card-image" src="${escapeHtml(card.image)}" alt="${escapeHtml(getCardName(card))}" loading="lazy">` : ""}
+        ${card.image ? buildImgTagWithFallback(getCardThumbnailPath(card.image), { className: "card-image", alt: getCardName(card), loading: "lazy", decoding: "async", fallbackSrc: card.image }) : ""}
         <div class="card-name">
           <span>${escapeHtml(getCardName(card))}</span>
           <span>${Number(card.points) || 0} 分</span>
@@ -5322,7 +5370,11 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
     findEmptySeat,
     applyRoomCodeFromUrl,
     // v0.9.3 公网部署辅助
-    isPrivateNetworkOrigin
+    isPrivateNetworkOrigin,
+    // v0.9.4 图片性能优化
+    getCardThumbnailPath,
+    getTokenThumbnailPath,
+    buildImgTagWithFallback
   };
 
   document.addEventListener("DOMContentLoaded", boot);
@@ -5386,7 +5438,10 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
       findReconnectSeat,
       findEmptySeat,
       // v0.9.3 公网部署辅助
-      isPrivateNetworkOrigin
+      isPrivateNetworkOrigin,
+      // v0.9.4 图片性能优化
+      getCardThumbnailPath,
+      getTokenThumbnailPath
     };
   }
 })();
