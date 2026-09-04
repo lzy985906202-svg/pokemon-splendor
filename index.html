@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>宝可梦璀璨宝石桌游 v0.9.11</title>
+  <title>宝可梦璀璨宝石桌游 v0.9.12</title>
   <link rel="stylesheet" href="style.css">
   <script src="/socket.io/socket.io.js" defer></script>
   <script src="online.js" defer></script>
@@ -11,6 +11,9 @@
   <script src="game.js" defer></script>
 </head>
 <body class="card-size-medium">
+
+  <!-- 单个 HTMLAudioElement：BGM 播放列表，不重复创建 -->
+  <audio id="bgmAudio" preload="metadata"></audio>
 
   <!-- ============ TOP BAR ============ -->
   <header class="top-bar">
@@ -34,8 +37,11 @@
         </select>
       </div>
       <div class="bgm-controls">
-        <button id="bgmToggleButton" class="ghost top-btn" type="button" title="背景音乐开关" aria-pressed="true">♪ 音乐</button>
-        <input id="bgmVolumeRange" class="bgm-volume" type="range" min="0" max="100" value="45" title="音乐音量" aria-label="音乐音量">
+        <button id="bgmPrevButton" class="ghost top-btn bgm-nav-btn" type="button" title="上一首" aria-label="上一首">⏮</button>
+        <button id="bgmToggleButton" class="ghost top-btn" type="button" title="背景音乐开关" aria-pressed="false">🔇</button>
+        <span id="bgmTrackName" class="bgm-track-name">音乐</span>
+        <button id="bgmNextButton" class="ghost top-btn bgm-nav-btn" type="button" title="下一首" aria-label="下一首">⏭</button>
+        <input id="bgmVolumeRange" class="bgm-volume" type="range" min="0" max="100" value="25" title="音乐音量" aria-label="音乐音量">
       </div>
       <button id="toggleAIPauseButton" class="ghost top-btn hidden" type="button">暂停 AI</button>
       <button id="aiStepButton" class="ghost top-btn hidden" type="button">AI 单步</button>

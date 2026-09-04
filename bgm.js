@@ -1,841 +1,308 @@
 /*
- * bgm.js — v0.9.7 8-bit FC 红白机风格 BGM 引擎
- * 3 首原创小镇主题轮换：清晨小镇 / 黄昏港湾 / 夜晚星空
- * 每首 64 小节（256 拍）≈ 2:17 / 2:47 / 3:22，无缝衔接切换
- * 纯波形合成（square / triangle / sawtooth / noise），无采样无外部文件
- * 旋律原创，不含任何宝可梦官方曲目改编
+ * bgm.js — v0.9.12 BGM MP3 Playlist
+ * 3 首 MP3 轮换播放：真新镇 → 古玫镇 → 末白镇 → 循环
+ * 使用单个 HTMLAudioElement + ended 事件，不使用 Web Audio API 合成
  *
- * 控制接口（与 v0.9.6 兼容）：
- *   - BGM.init()        初始化 AudioContext（需在用户首次交互后）
+ * 控制接口：
  *   - BGM.toggle()      开/关，返回播放状态
  *   - BGM.setVolume(v)  设置音量 0-100
- *   - BGM.skip()        手动切到下一首
+ *   - BGM.next()        下一首
+ *   - BGM.prev()        上一首
+ *   - BGM.getState()    获取当前状态（调试用）
+ *
+ * 不通过 Socket.IO 同步任何音乐状态。
+ * 每个玩家自己控制音乐。
  */
 (function () {
   "use strict";
 
-  // ============ 音符频率表（C1-C6，12-平均律）============
-  const NOTE_FREQ = (function () {
-    const names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-    const table = {};
-    for (let oct = 1; oct <= 6; oct++) {
-      for (let i = 0; i < 12; i++) {
-        const semis = (oct - 4) * 12 + i;
-        table[names[i] + oct] = 261.63 * Math.pow(2, semis / 12);
-      }
-    }
-    table["R"] = 0; // 休止符
-    return table;
-  })();
-
-  function noteToFreq(name) {
-    return NOTE_FREQ[name] || 0;
-  }
-
-  // ============ 模式库 ============
-  // 每个模式 8 小节 = 32 拍
-  // 字段：
-  //   m  主旋律（square）     [音名, 起始拍, 持续拍]
-  //   b  低音（triangle）    长音垫底
-  //   p  和声 pad（sawtooth，低 gain） 长持续和弦
-  //   h  hi-hat（noise）      仅 Track 1 使用，营造轻快节奏
-  // 所有旋律原创，未引用任何已有曲目
-
-  const PAT = {
-    // ============ Track 1：清晨小镇（C 大调，112 BPM）============
-    m1: {
-      m: [
-        // bar 1-2 (0-7)
-        ["C5",0,0.5],["E5",0.5,0.5],["G5",1,1],["E5",2,0.5],["D5",2.5,0.5],["C5",3,1],
-        ["A4",4,0.5],["C5",4.5,0.5],["E5",5,1],["D5",6,0.5],["C5",6.5,0.5],["G4",7,1],
-        // bar 3-4 (8-15)
-        ["G5",8,0.5],["F5",8.5,0.5],["E5",9,0.5],["D5",9.5,0.5],["C5",10,1],["E5",11,1],
-        ["F5",12,0.5],["E5",12.5,0.5],["D5",13,0.5],["C5",13.5,0.5],["D5",14,1],["G5",15,1],
-        // bar 5-6 (16-23)
-        ["E5",16,1],["G5",17,1],["C6",18,1.5],["B5",19.5,0.5],["A5",20,1],["G5",21,1],
-        ["F5",22,0.5],["E5",22.5,0.5],["D5",23,1],
-        // bar 7-8 (24-31) 半终止
-        ["E5",24,0.5],["F5",24.5,0.5],["G5",25,1],["A5",26,1.5],["G5",27.5,0.5],
-        ["C6",28,1],["B5",29,0.5],["A5",29.5,0.5],["G5",30,1.5],["D5",31.5,0.5]
-      ],
-      b: [
-        ["C3",0,4],["F2",4,4],["G2",8,4],["C3",12,4],
-        ["C3",16,4],["G2",20,4],["F2",24,4],["G2",28,4]
-      ],
-      p: [["C4",0,8],["F4",8,8],["E4",16,8],["G4",24,8]],
-      h: [["R",1,0.25],["R",3,0.25],["R",5,0.25],["R",7,0.25],["R",9,0.25],["R",11,0.25],["R",13,0.25],["R",15,0.25],["R",17,0.25],["R",19,0.25],["R",21,0.25],["R",23,0.25],["R",25,0.25],["R",27,0.25],["R",29,0.25],["R",31,0.25]]
-    },
-    m2: {
-      m: [
-        // bar 9-10 (0-7)
-        ["C5",0,0.5],["D5",0.5,0.5],["E5",1,1],["G5",2,1],["F5",3,1],
-        ["A5",4,1],["G5",5,0.5],["F5",5.5,0.5],["E5",6,1],["D5",7,1],
-        // bar 11-12 (8-15)
-        ["C5",8,0.5],["E5",8.5,0.5],["G5",9,1],["E5",10,0.5],["G5",10.5,0.5],["C6",11,1],
-        ["B5",12,1],["A5",13,0.5],["G5",13.5,0.5],["F5",14,1],["E5",15,1],
-        // bar 13-14 (16-23)
-        ["D5",16,1],["F5",17,1],["A5",18,1.5],["G5",19.5,0.5],["F5",20,1],["D5",21,1],
-        ["E5",22,0.5],["F5",22.5,0.5],["G5",23,1],
-        // bar 15-16 (24-31) 全终止回到 C
-        ["C6",24,1],["B5",25,0.5],["A5",25.5,0.5],["G5",26,1],["E5",27,1],
-        ["F5",28,0.5],["E5",28.5,0.5],["D5",29,0.5],["C5",29.5,0.5],["C5",30,1.5],["R",31.5,0.5]
-      ],
-      b: [
-        ["C3",0,4],["G2",4,4],["C3",8,4],["G2",12,4],
-        ["F2",16,4],["C3",20,4],["F2",24,4],["C3",28,4]
-      ],
-      p: [["C4",0,8],["E4",8,8],["F4",16,8],["C4",24,8]],
-      h: [["R",1,0.25],["R",3,0.25],["R",5,0.25],["R",7,0.25],["R",9,0.25],["R",11,0.25],["R",13,0.25],["R",15,0.25],["R",17,0.25],["R",19,0.25],["R",21,0.25],["R",23,0.25],["R",25,0.25],["R",27,0.25],["R",29,0.25],["R",31,0.25]]
-    },
-    m3: {
-      m: [
-        // 桥段，转 A 小调氛围 (0-7)
-        ["A4",0,1],["C5",1,0.5],["E5",1.5,0.5],["D5",2,1],["F5",3,1],
-        ["E5",4,1],["D5",5,0.5],["C5",5.5,0.5],["B4",6,1],["A4",7,1],
-        // (8-15) 转回 C 大调
-        ["G4",8,1],["B4",9,0.5],["D5",9.5,0.5],["C5",10,1],["E5",11,1],
-        ["D5",12,1],["F5",13,0.5],["E5",13.5,0.5],["D5",14,1],["G5",15,1],
-        // (16-23) 上升过渡
-        ["E5",16,0.5],["G5",16.5,0.5],["C6",17,1],["B5",18,0.5],["A5",18.5,0.5],["G5",19,1],
-        ["A5",20,0.5],["G5",20.5,0.5],["F5",21,0.5],["E5",21.5,0.5],["D5",22,1],["F5",23,1],
-        // (24-31) 准备回主题
-        ["E5",24,1],["G5",25,1],["C6",26,1],["B5",27,1],
-        ["C6",28,1],["A5",29,1],["G5",30,1],["E5",31,1]
-      ],
-      b: [
-        ["A2",0,4],["F2",4,4],["C3",8,4],["G2",12,4],
-        ["C3",16,4],["F2",20,4],["G2",24,4],["C3",28,4]
-      ],
-      p: [["A3",0,8],["E4",8,8],["C4",16,8],["G3",24,8]],
-      h: [["R",1,0.25],["R",3,0.25],["R",5,0.25],["R",7,0.25],["R",9,0.25],["R",11,0.25],["R",13,0.25],["R",15,0.25],["R",17,0.25],["R",19,0.25],["R",21,0.25],["R",23,0.25],["R",25,0.25],["R",27,0.25],["R",29,0.25],["R",31,0.25]]
-    },
-    m4: {
-      m: [
-        // 主题变奏，加入更多 16 分音符 (0-7)
-        ["C5",0,0.25],["D5",0.25,0.25],["E5",0.5,0.25],["F5",0.75,0.25],["G5",1,1],["E5",2,0.5],["C5",2.5,0.5],["D5",3,1],
-        ["F5",4,0.25],["G5",4.25,0.25],["A5",4.5,0.25],["B5",4.75,0.25],["C6",5,1],["A5",6,0.5],["F5",6.5,0.5],["G5",7,1],
-        // (8-15)
-        ["E5",8,0.5],["G5",8.5,0.5],["C6",9,1],["B5",10,0.5],["A5",10.5,0.5],["G5",11,1],
-        ["F5",12,0.5],["A5",12.5,0.5],["C6",13,1],["B5",14,0.5],["A5",14.5,0.5],["G5",15,1],
-        // (16-23)
-        ["E5",16,1],["D5",17,1],["C5",18,1],["D5",19,1],
-        ["E5",20,0.5],["F5",20.5,0.5],["G5",21,1],["A5",22,1],["G5",23,1],
-        // (24-31)
-        ["C6",24,1],["B5",25,1],["A5",26,1],["G5",27,1],
-        ["F5",28,1],["E5",29,1],["D5",30,1],["C5",31,1]
-      ],
-      b: [
-        ["C3",0,4],["F2",4,4],["C3",8,4],["G2",12,4],
-        ["A2",16,4],["F2",20,4],["G2",24,4],["C3",28,4]
-      ],
-      p: [["C4",0,8],["F4",8,8],["A3",16,8],["G3",24,8]],
-      h: [["R",1,0.25],["R",3,0.25],["R",5,0.25],["R",7,0.25],["R",9,0.25],["R",11,0.25],["R",13,0.25],["R",15,0.25],["R",17,0.25],["R",19,0.25],["R",21,0.25],["R",23,0.25],["R",25,0.25],["R",27,0.25],["R",29,0.25],["R",31,0.25]]
-    },
-    m5: {
-      m: [
-        // 高八度主题 (0-7)
-        ["C6",0,1],["E6",1,0.5],["G6",1.5,0.5],["E6",2,1],["D6",3,1],
-        ["C6",4,0.5],["D6",4.5,0.5],["E6",5,1],["F6",6,1],["E6",7,1],
-        // (8-15)
-        ["G6",8,1],["F6",9,0.5],["E6",9.5,0.5],["D6",10,1],["C6",11,1],
-        ["E6",12,1],["G6",13,1],["C7",14,1],["B6",15,1],
-        // (16-23) 下行回应
-        ["A6",16,1],["G6",17,1],["F6",18,1],["E6",19,1],
-        ["D6",20,1],["C6",21,1],["B5",22,1],["A5",23,1],
-        // (24-31) 过渡
-        ["G5",24,1],["A5",25,1],["B5",26,1],["C6",27,1],
-        ["D6",28,1],["E6",29,1],["F6",30,1],["G6",31,1]
-      ],
-      b: [
-        ["C3",0,4],["G2",4,4],["F2",8,4],["C3",12,4],
-        ["F2",16,4],["C3",20,4],["G2",24,4],["C3",28,4]
-      ],
-      p: [["C4",0,8],["G3",8,8],["F3",16,8],["C4",24,8]],
-      h: [["R",1,0.25],["R",3,0.25],["R",5,0.25],["R",7,0.25],["R",9,0.25],["R",11,0.25],["R",13,0.25],["R",15,0.25],["R",17,0.25],["R",19,0.25],["R",21,0.25],["R",23,0.25],["R",25,0.25],["R",27,0.25],["R",29,0.25],["R",31,0.25]]
-    },
-    m6: {
-      m: [
-        // 模进发展 (0-7)
-        ["E5",0,1],["G5",1,1],["C6",2,1],["D6",3,1],
-        ["F6",4,1],["E6",5,1],["D6",6,1],["C6",7,1],
-        // (8-15) 下降模进
-        ["B5",8,1],["D6",9,1],["G6",10,1],["F6",11,1],
-        ["E6",12,1],["D6",13,1],["C6",14,1],["B5",15,1],
-        // (16-23)
-        ["A5",16,1],["C6",17,1],["E6",18,1],["D6",19,1],
-        ["C6",20,1],["B5",21,1],["A5",22,1],["G5",23,1],
-        // (24-31) 过渡至高潮
-        ["F5",24,1],["E5",25,1],["D5",26,1],["E5",27,1],
-        ["F5",28,1],["G5",29,1],["A5",30,1],["B5",31,1]
-      ],
-      b: [
-        ["C3",0,4],["G2",4,4],["F2",8,4],["G2",12,4],
-        ["A2",16,4],["E2",20,4],["F2",24,4],["G2",28,4]
-      ],
-      p: [["C4",0,8],["F3",8,8],["A3",16,8],["G3",24,8]],
-      h: [["R",1,0.25],["R",3,0.25],["R",5,0.25],["R",7,0.25],["R",9,0.25],["R",11,0.25],["R",13,0.25],["R",15,0.25],["R",17,0.25],["R",19,0.25],["R",21,0.25],["R",23,0.25],["R",25,0.25],["R",27,0.25],["R",29,0.25],["R",31,0.25]]
-    },
-    m7: {
-      m: [
-        // 高潮，全频段饱满 (0-7)
-        ["C6",0,1.5],["B5",1.5,0.5],["C6",2,1],["E6",3,1],
-        ["G6",4,1.5],["F6",5.5,0.5],["E6",6,1],["C6",7,1],
-        // (8-15)
-        ["A5",8,1],["C6",9,1],["E6",10,1],["A6",11,1],
-        ["G6",12,1],["E6",13,1],["C6",14,1],["A5",15,1],
-        // (16-23)
-        ["F5",16,1],["A5",17,1],["C6",18,1],["F6",19,1],
-        ["E6",20,1],["C6",21,1],["A5",22,1],["F5",23,1],
-        // (24-31)
-        ["G5",24,1],["B5",25,1],["D6",26,1],["G6",27,1],
-        ["C6",28,1],["E6",29,1],["G6",30,1],["C7",31,1]
-      ],
-      b: [
-        ["C3",0,4],["A2",4,4],["F2",8,4],["C3",12,4],
-        ["F2",16,4],["C3",20,4],["G2",24,4],["C3",28,4]
-      ],
-      p: [["C4",0,8],["A3",8,8],["F3",16,8],["G3",24,8]],
-      h: [["R",1,0.25],["R",3,0.25],["R",5,0.25],["R",7,0.25],["R",9,0.25],["R",11,0.25],["R",13,0.25],["R",15,0.25],["R",17,0.25],["R",19,0.25],["R",21,0.25],["R",23,0.25],["R",25,0.25],["R",27,0.25],["R",29,0.25],["R",31,0.25]]
-    },
-    m8: {
-      m: [
-        // 尾声，渐缓收束 (0-7)
-        ["C6",0,1],["B5",1,1],["C6",2,1],["G5",3,1],
-        ["A5",4,1],["G5",5,1],["E5",6,1],["G5",7,1],
-        // (8-15)
-        ["C6",8,1],["E6",9,1],["G6",10,1],["E6",11,1],
-        ["C6",12,1],["A5",13,1],["F5",14,1],["G5",15,1],
-        // (16-23)
-        ["E5",16,1],["G5",17,1],["C6",18,1.5],["B5",19.5,0.5],
-        ["A5",20,1],["G5",21,1],["F5",22,1],["E5",23,1],
-        // (24-31) 最终收束回主音 C
-        ["D5",24,1],["E5",25,1],["F5",26,1],["G5",27,1],
-        ["E5",28,1],["D5",29,1],["C5",30,1.5],["R",31.5,0.5]
-      ],
-      b: [
-        ["C3",0,4],["G2",4,4],["F2",8,4],["C3",12,4],
-        ["C3",16,4],["F2",20,4],["G2",24,4],["C3",28,4]
-      ],
-      p: [["C4",0,8],["F4",8,8],["C4",16,8],["G3",24,8]],
-      h: [["R",1,0.25],["R",3,0.25],["R",5,0.25],["R",7,0.25],["R",9,0.25],["R",11,0.25],["R",13,0.25],["R",15,0.25],["R",17,0.25],["R",19,0.25],["R",21,0.25],["R",23,0.25]]
-    },
-
-    // ============ Track 2：黄昏港湾（F 大调，92 BPM）============
-    d1: {
-      m: [
-        // 抒情开篇 (0-7)
-        ["F5",0,1],["E5",1,0.5],["F5",1.5,0.5],["A5",2,1.5],["G5",3.5,0.5],
-        ["F5",4,1],["C5",5,0.5],["D5",5.5,0.5],["F5",6,1.5],["C5",7.5,0.5],
-        // (8-15)
-        ["A5",8,1],["G5",9,0.5],["A5",9.5,0.5],["C6",10,1.5],["A5",11.5,0.5],
-        ["F5",12,1],["D5",13,0.5],["F5",13.5,0.5],["C5",14,2],
-        // (16-23) 转折
-        ["G5",16,1],["F5",17,0.5],["E5",17.5,0.5],["F5",18,1],["A5",19,1],
-        ["C6",20,1],["A5",21,0.5],["F5",21.5,0.5],["G5",22,1],["F5",23,1],
-        // (24-31) 半终止
-        ["E5",24,1],["F5",25,0.5],["G5",25.5,0.5],["A5",26,1.5],["C6",27.5,0.5],
-        ["A5",28,1],["G5",29,0.5],["F5",29.5,0.5],["E5",30,1.5],["F5",31.5,0.5]
-      ],
-      b: [
-        ["F2",0,4],["C3",4,4],["F2",8,4],["Bb2",12,4],
-        ["C3",16,4],["F2",20,4],["C3",24,4],["F2",28,4]
-      ],
-      p: [["F4",0,8],["C4",8,8],["A3",16,8],["F3",24,8]]
-    },
-    d2: {
-      m: [
-        // 主题延续 (0-7)
-        ["F5",0,1.5],["A5",1.5,0.5],["C6",2,1],["A5",3,1],
-        ["G5",4,1],["F5",5,1],["E5",6,1],["F5",7,1],
-        // (8-15)
-        ["A5",8,1],["C6",9,1],["F6",10,1.5],["E6",11.5,0.5],
-        ["D6",12,1],["C6",13,1],["A5",14,1],["F5",15,1],
-        // (16-23)
-        ["G5",16,1],["Bb5",17,1],["D6",18,1.5],["C6",19.5,0.5],
-        ["Bb5",20,1],["A5",21,1],["G5",22,1],["F5",23,1],
-        // (24-31) 全终止
-        ["C6",24,1.5],["A5",25.5,0.5],["F5",26,1.5],["C5",27.5,0.5],
-        ["D5",28,1],["F5",29,1],["C5",30,1.5],["R",31.5,0.5]
-      ],
-      b: [
-        ["F2",0,4],["C3",4,4],["F2",8,4],["Bb2",12,4],
-        ["G2",16,4],["C3",20,4],["F2",24,4],["C3",28,4]
-      ],
-      p: [["F4",0,8],["F4",8,8],["G3",16,8],["F3",24,8]]
-    },
-    d3: {
-      m: [
-        // 中段对比 (0-7) D 小调氛围
-        ["D5",0,1],["F5",1,0.5],["A5",1.5,0.5],["G5",2,1],["F5",3,1],
-        ["E5",4,1],["D5",5,0.5],["C5",5.5,0.5],["D5",6,1],["A4",7,1],
-        // (8-15) 转回 F
-        ["Bb4",8,1],["D5",9,0.5],["F5",9.5,0.5],["A5",10,1],["G5",11,1],
-        ["F5",12,1],["E5",13,1],["D5",14,1],["C5",15,1],
-        // (16-23)
-        ["F5",16,1],["A5",17,1],["C6",18,1],["Bb5",19,1],
-        ["A5",20,1],["G5",21,1],["F5",22,1],["E5",23,1],
-        // (24-31)
-        ["D5",24,1],["F5",25,1],["A5",26,1],["G5",27,1],
-        ["F5",28,1],["E5",29,1],["D5",30,1.5],["R",31.5,0.5]
-      ],
-      b: [
-        ["D2",0,4],["A2",4,4],["Bb2",8,4],["F2",12,4],
-        ["F2",16,4],["C3",20,4],["F2",24,4],["A2",28,4]
-      ],
-      p: [["D4",0,8],["Bb3",8,8],["F3",16,8],["F3",24,8]]
-    },
-    d4: {
-      m: [
-        // 主题变奏，加入附点 (0-7)
-        ["F5",0,1.5],["G5",1.5,0.5],["A5",2,1],["C6",3,1],
-        ["Bb5",4,1.5],["A5",5.5,0.5],["G5",6,1],["F5",7,1],
-        // (8-15)
-        ["A5",8,1.5],["C6",9.5,0.5],["F6",10,1],["E6",11,1],
-        ["D6",12,1],["C6",13,1],["Bb5",14,1],["A5",15,1],
-        // (16-23)
-        ["G5",16,1.5],["F5",17.5,0.5],["E5",18,1],["F5",19,1],
-        ["A5",20,1],["G5",21,1],["F5",22,1],["E5",23,1],
-        // (24-31)
-        ["D5",24,1],["F5",25,1],["A5",26,1],["C6",27,1],
-        ["F6",28,1],["E6",29,1],["D5",30,1],["F5",31,1]
-      ],
-      b: [
-        ["F2",0,4],["C3",4,4],["Bb2",8,4],["F2",12,4],
-        ["C3",16,4],["F2",20,4],["Bb2",24,4],["F2",28,4]
-      ],
-      p: [["F4",0,8],["C4",8,8],["C4",16,8],["Bb3",24,8]]
-    },
-    d5: {
-      m: [
-        // 高八度主题 (0-7)
-        ["F6",0,1.5],["A6",1.5,0.5],["G6",2,1],["F6",3,1],
-        ["E6",4,1],["F6",5,1],["A6",6,1],["G6",7,1],
-        // (8-15)
-        ["C6",8,1],["F6",9,1],["A6",10,1.5],["G6",11.5,0.5],
-        ["F6",12,1],["E6",13,1],["D6",14,1],["C6",15,1],
-        // (16-23) 下行
-        ["Bb5",16,1],["A5",17,1],["G5",18,1],["F5",19,1],
-        ["E5",20,1],["F5",21,1],["G5",22,1],["A5",23,1],
-        // (24-31)
-        ["Bb5",24,1],["C6",25,1],["D6",26,1],["E6",27,1],
-        ["F6",28,1],["A6",29,1],["C7",30,1],["A6",31,1]
-      ],
-      b: [
-        ["F2",0,4],["C3",4,4],["F2",8,4],["Bb2",12,4],
-        ["C3",16,4],["F2",20,4],["G2",24,4],["C3",28,4]
-      ],
-      p: [["F4",0,8],["E4",8,8],["C4",16,8],["G3",24,8]]
-    },
-    d6: {
-      m: [
-        // 模进 (0-7)
-        ["F5",0,1],["A5",1,1],["C6",2,1],["F6",3,1],
-        ["E6",4,1],["C6",5,1],["A5",6,1],["F5",7,1],
-        // (8-15)
-        ["G5",8,1],["Bb5",9,1],["D6",10,1],["G6",11,1],
-        ["F6",12,1],["D6",13,1],["Bb5",14,1],["G5",15,1],
-        // (16-23)
-        ["A5",16,1],["C6",17,1],["E6",18,1],["A6",19,1],
-        ["G6",20,1],["E6",21,1],["C6",22,1],["A5",23,1],
-        // (24-31)
-        ["Bb5",24,1],["D6",25,1],["F6",26,1],["Bb6",27,1],
-        ["A6",28,1],["F6",29,1],["D6",30,1],["Bb5",31,1]
-      ],
-      b: [
-        ["F2",0,4],["C3",4,4],["G2",8,4],["C3",12,4],
-        ["A2",16,4],["F2",20,4],["Bb2",24,4],["F2",28,4]
-      ],
-      p: [["F4",0,8],["C4",8,8],["A3",16,8],["Bb3",24,8]]
-    },
-    d7: {
-      m: [
-        // 高潮 (0-7)
-        ["F6",0,1.5],["E6",1.5,0.5],["F6",2,1],["A6",3,1],
-        ["C7",4,1.5],["Bb6",5.5,0.5],["A6",6,1],["F6",7,1],
-        // (8-15)
-        ["D6",8,1],["F6",9,1],["A6",10,1],["D7",11,1],
-        ["C7",12,1],["A6",13,1],["F6",14,1],["D6",15,1],
-        // (16-23)
-        ["Bb5",16,1],["D6",17,1],["F6",18,1],["Bb6",19,1],
-        ["A6",20,1],["F6",21,1],["D6",22,1],["Bb5",23,1],
-        // (24-31)
-        ["C6",24,1],["E6",25,1],["G6",26,1],["C7",27,1],
-        ["F6",28,1],["A6",29,1],["C7",30,1],["F7",31,1]
-      ],
-      b: [
-        ["F2",0,4],["D2",4,4],["Bb2",8,4],["F2",12,4],
-        ["Bb2",16,4],["F2",20,4],["C3",24,4],["F2",28,4]
-      ],
-      p: [["F4",0,8],["Bb3",8,8],["Bb3",16,8],["C4",24,8]]
-    },
-    d8: {
-      m: [
-        // 尾声 (0-7)
-        ["F6",0,1],["E6",1,1],["F6",2,1],["D6",3,1],
-        ["C6",4,1],["A5",5,1],["F5",6,1],["A5",7,1],
-        // (8-15)
-        ["C6",8,1],["F6",9,1],["A6",10,1],["F6",11,1],
-        ["C6",12,1],["A5",13,1],["F5",14,1],["C5",15,1],
-        // (16-23)
-        ["D5",16,1],["F5",17,1],["A5",18,1.5],["G5",19.5,0.5],
-        ["F5",20,1],["E5",21,1],["D5",22,1],["C5",23,1],
-        // (24-31) 收束
-        ["D5",24,1],["E5",25,1],["F5",26,1],["G5",27,1],
-        ["F5",28,1],["D5",29,1],["C5",30,1.5],["R",31.5,0.5]
-      ],
-      b: [
-        ["F2",0,4],["C3",4,4],["F2",8,4],["C3",12,4],
-        ["Bb2",16,4],["F2",20,4],["C3",24,4],["F2",28,4]
-      ],
-      p: [["F4",0,8],["C4",8,8],["Bb3",16,8],["F3",24,8]]
-    },
-
-    // ============ Track 3：夜晚星空（A 小调，76 BPM）============
-    n1: {
-      m: [
-        // 静谧开篇 (0-7)
-        ["A4",0,2],["C5",2,2],["E5",4,2],["D5",6,2],
-        // (8-15)
-        ["C5",8,2],["B4",10,2],["A4",12,2],["G4",14,2],
-        // (16-23)
-        ["F4",16,2],["E4",18,2],["F4",20,2],["A4",22,2],
-        // (24-31)
-        ["E5",24,1],["D5",25,1],["C5",26,2],["B4",28,2],["A4",30,2]
-      ],
-      b: [
-        ["A2",0,8],["F2",8,8],["C3",16,8],["E2",24,8]
-      ],
-      p: [["A3",0,16],["A3",16,16]]
-    },
-    n2: {
-      m: [
-        // 主题 (0-7)
-        ["A4",0,1.5],["C5",1.5,0.5],["E5",2,1.5],["D5",3.5,0.5],
-        ["C5",4,1.5],["B4",5.5,0.5],["A4",6,2],
-        // (8-15)
-        ["G4",8,1.5],["A4",9.5,0.5],["B4",10,1.5],["C5",11.5,0.5],
-        ["D5",12,2],["E5",14,2],
-        // (16-23)
-        ["F5",16,1.5],["E5",17.5,0.5],["D5",18,1.5],["C5",19.5,0.5],
-        ["B4",20,2],["A4",22,2],
-        // (24-31)
-        ["G4",24,1.5],["A4",25.5,0.5],["B4",26,1.5],["C5",27.5,0.5],
-        ["A4",28,2],["E4",30,2]
-      ],
-      b: [
-        ["A2",0,8],["E2",8,8],["F2",16,8],["A2",24,8]
-      ],
-      p: [["A3",0,16],["E3",16,16]]
-    },
-    n3: {
-      m: [
-        // 中段，转 C 大调氛围 (0-7)
-        ["C5",0,2],["E5",2,2],["G5",4,2],["F5",6,2],
-        // (8-15)
-        ["E5",8,2],["D5",10,2],["C5",12,2],["G4",14,2],
-        // (16-23)
-        ["A4",16,2],["C5",18,2],["E5",20,2],["G5",22,2],
-        // (24-31)
-        ["F5",24,1.5],["E5",25.5,0.5],["D5",26,1.5],["C5",27.5,0.5],
-        ["B4",28,2],["A4",30,2]
-      ],
-      b: [
-        ["C3",0,8],["G2",8,8],["A2",16,8],["E2",24,8]
-      ],
-      p: [["C4",0,16],["A3",16,16]]
-    },
-    n4: {
-      m: [
-        // 主题变奏 (0-7)
-        ["A4",0,1],["B4",1,1],["C5",2,1],["D5",3,1],
-        ["E5",4,1],["D5",5,1],["C5",6,1],["B4",7,1],
-        // (8-15)
-        ["A4",8,1],["G4",9,1],["A4",10,1],["B4",11,1],
-        ["C5",12,1],["D5",13,1],["E5",14,2],
-        // (16-23)
-        ["F5",16,1],["E5",17,1],["D5",18,1],["C5",19,1],
-        ["B4",20,1],["A4",21,1],["G4",22,1],["F4",23,1],
-        // (24-31)
-        ["E4",24,1],["F4",25,1],["G4",26,1],["A4",27,1],
-        ["B4",28,1],["C5",29,1],["A4",30,2]
-      ],
-      b: [
-        ["A2",0,8],["F2",8,8],["C3",16,8],["E2",24,8]
-      ],
-      p: [["A3",0,16],["C4",16,16]]
-    },
-    n5: {
-      m: [
-        // 高八度主题 (0-7)
-        ["A5",0,2],["C6",2,2],["E6",4,2],["D6",6,2],
-        // (8-15)
-        ["C6",8,2],["B5",10,2],["A5",12,2],["E5",14,2],
-        // (16-23)
-        ["F5",16,1.5],["E5",17.5,0.5],["D5",18,1.5],["C5",19.5,0.5],
-        ["B4",20,2],["A4",22,2],
-        // (24-31)
-        ["G4",24,1.5],["A4",25.5,0.5],["B4",26,1.5],["C5",27.5,0.5],
-        ["A4",28,2],["E5",30,2]
-      ],
-      b: [
-        ["A2",0,8],["E2",8,8],["F2",16,8],["A2",24,8]
-      ],
-      p: [["A3",0,16],["E3",16,16]]
-    },
-    n6: {
-      m: [
-        // 模进 (0-7)
-        ["A4",0,1],["E5",1,1],["A5",2,1],["E5",3,1],
-        ["F5",4,1],["E5",5,1],["D5",6,1],["A4",7,1],
-        // (8-15)
-        ["B4",8,1],["F5",9,1],["B5",10,1],["F5",11,1],
-        ["G5",12,1],["F5",13,1],["E5",14,1],["B4",15,1],
-        // (16-23)
-        ["C5",16,1],["G5",17,1],["C6",18,1],["G5",19,1],
-        ["A5",20,1],["G5",21,1],["F5",22,1],["C5",23,1],
-        // (24-31)
-        ["E5",24,1],["B5",25,1],["E6",26,1],["B5",27,1],
-        ["C6",28,1],["B5",29,1],["A5",30,1],["E5",31,1]
-      ],
-      b: [
-        ["A2",0,8],["B2",8,8],["C3",16,8],["E2",24,8]
-      ],
-      p: [["A3",0,16],["C4",16,16]]
-    },
-    n7: {
-      m: [
-        // 高潮 (0-7)
-        ["E5",0,1.5],["A5",1.5,0.5],["C6",2,1.5],["E6",3.5,0.5],
-        ["A6",4,2],["G6",6,2],
-        // (8-15)
-        ["F6",8,1.5],["E6",9.5,0.5],["D6",10,1.5],["C6",11.5,0.5],
-        ["B5",12,2],["A5",14,2],
-        // (16-23)
-        ["G5",16,1.5],["A5",17.5,0.5],["B5",18,1.5],["C6",19.5,0.5],
-        ["D6",20,2],["E6",22,2],
-        // (24-31)
-        ["F6",24,1.5],["E6",25.5,0.5],["D6",26,1.5],["C6",27.5,0.5],
-        ["B5",28,2],["A5",30,2]
-      ],
-      b: [
-        ["A2",0,8],["F2",8,8],["C3",16,8],["E2",24,8]
-      ],
-      p: [["A3",0,16],["F3",16,16]]
-    },
-    n8: {
-      m: [
-        // 尾声，宁静收束 (0-7)
-        ["A5",0,2],["G5",2,2],["F5",4,2],["E5",6,2],
-        // (8-15)
-        ["D5",8,2],["C5",10,2],["B4",12,2],["A4",14,2],
-        // (16-23)
-        ["G4",16,2],["A4",18,2],["B4",20,2],["C5",22,2],
-        // (24-31) 极慢收束回主音
-        ["D5",24,2],["E5",26,2],["C5",28,2],["A4",30,2]
-      ],
-      b: [
-        ["A2",0,8],["E2",8,8],["F2",16,8],["A2",24,8]
-      ],
-      p: [["A3",0,16],["A3",16,16]]
-    }
-  };
-
-  // ============ 由模式序列构建完整 Track ============
-  // 把 8 个 32-拍模式串成 256 拍的完整曲目，并把每个音符的 beat 偏移叠加
-  function buildTrack(name, bpm, seq) {
-    const merged = { name, bpm, melody: [], bass: [], pad: [], hat: [], totalBeats: 0 };
-    let offset = 0;
-    seq.forEach((key) => {
-      const p = PAT[key];
-      if (!p) return;
-      // 把模式内音符的起始拍 + offset 后追加到完整数组
-      (p.m || []).forEach((n) => merged.melody.push([n[0], n[1] + offset, n[2]]));
-      (p.b || []).forEach((n) => merged.bass.push([n[0], n[1] + offset, n[2]]));
-      (p.p || []).forEach((n) => merged.pad.push([n[0], n[1] + offset, n[2]]));
-      (p.h || []).forEach((n) => merged.hat.push([n[0], n[1] + offset, n[2]]));
-      offset += p.len || 32;
-    });
-    merged.totalBeats = offset;
-    return merged;
-  }
-
-  const TRACKS = [
-    buildTrack("清晨小镇", 112, ["m1","m2","m3","m4","m5","m6","m7","m8"]),
-    buildTrack("黄昏港湾", 92,  ["d1","d2","d3","d4","d5","d6","d7","d8"]),
-    buildTrack("夜晚星空", 76,  ["n1","n2","n3","n4","n5","n6","n7","n8"])
+  // ============ 播放列表 ============
+  var PLAYLIST = [
+    { file: "assets/audio/pallet-town.mp3", name: "真新镇" },
+    { file: "assets/audio/oldale-town.mp3", name: "古玫镇" },
+    { file: "assets/audio/masara-town.mp3", name: "末白镇" }
   ];
 
-  // ============ BGM 控制器 ============
-  const BGM = {
-    ctx: null,
-    masterGain: null,
-    playing: false,
-    volume: 0.45,
-    trackIndex: 0,
-    nextNoteTime: 0,
-    currentBeat: 0,
-    schedulerTimer: null,
-    activeNodes: [],
-    noiseBuffer: null, // 缓存的噪声 buffer，避免每次新建
+  // ============ 存储 Key ============
+  var STORAGE_KEY = "pokemonSplendorAudioSettings.v1";
 
-    init() {
-      if (this.ctx) return;
-      const Ctor = window.AudioContext || window.webkitAudioContext;
-      if (!Ctor) return;
-      this.ctx = new Ctor();
-      this.masterGain = this.ctx.createGain();
-      this.masterGain.gain.value = this.volume;
-      this.masterGain.connect(this.ctx.destination);
-      // 预生成 2 秒白噪声 buffer，用于 hi-hat
-      const buf = this.ctx.createBuffer(1, this.ctx.sampleRate * 2, this.ctx.sampleRate);
-      const data = buf.getChannelData(0);
-      for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
-      this.noiseBuffer = buf;
+  // ============ 默认设置 ============
+  var DEFAULTS = {
+    enabled: true,
+    volume: 0.25,
+    currentTrack: 0
+  };
+
+  // ============ BGM 控制器 ============
+  var BGM = {
+    audio: null,        // HTMLAudioElement
+    playing: false,
+    volume: 0.25,
+    trackIndex: 0,
+    ready: false,
+
+    // ============ 初始化 ============
+    _init() {
+      if (this.ready) return;
+      this.audio = document.getElementById("bgmAudio");
+      if (!this.audio) {
+        // 如果 HTML 中没有 <audio> 元素，动态创建
+        this.audio = document.createElement("audio");
+        this.audio.id = "bgmAudio";
+        this.audio.preload = "metadata";
+        document.body.appendChild(this.audio);
+      }
+      // 加载设置
+      var settings = this._loadSettings();
+      this.volume = settings.volume;
+      this.trackIndex = settings.currentTrack;
+      this.audio.volume = this.volume;
+      this.audio.preload = "metadata";
+
+      // ended 事件 → 播放下一首
+      var self = this;
+      this.audio.addEventListener("ended", function () {
+        self._nextTrack();
+      });
+
+      // 错误处理（避免 Console 报未处理异常）
+      this.audio.addEventListener("error", function (e) {
+        // 静默处理，不抛出
+      });
+
+      this.ready = true;
     },
 
+    // ============ 设置管理 ============
+    _loadSettings() {
+      try {
+        var raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          var s = JSON.parse(raw);
+          return {
+            enabled: s.enabled !== false,
+            volume: typeof s.volume === "number" ? s.volume : DEFAULTS.volume,
+            currentTrack: typeof s.currentTrack === "number" && s.currentTrack >= 0 && s.currentTrack < PLAYLIST.length ? s.currentTrack : 0
+          };
+        }
+      } catch (e) {}
+      return { enabled: DEFAULTS.enabled, volume: DEFAULTS.volume, currentTrack: DEFAULTS.currentTrack };
+    },
+
+    _saveSettings() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          enabled: this.playing,
+          volume: this.volume,
+          currentTrack: this.trackIndex
+        }));
+      } catch (e) {}
+    },
+
+    // ============ 播放控制 ============
     start() {
-      this.init();
-      if (!this.ctx) return;
-      if (this.ctx.state === "suspended") this.ctx.resume();
-      if (this.playing) return;
+      this._init();
+      if (!this.audio) return;
+      this._loadTrack(this.trackIndex);
+      this._play();
+    },
+
+    _play() {
+      if (!this.audio) return;
+      var self = this;
       this.playing = true;
-      this.trackIndex = 0;
-      this.currentBeat = 0;
-      this.nextNoteTime = this.ctx.currentTime + 0.06;
-      this._updateTrackName();
-      this._tick();
+      this.audio.volume = this.volume;
+
+      // 尝试播放，catch autoplay rejection
+      var p = this.audio.play();
+      if (p && typeof p.catch === "function") {
+        p.catch(function () {
+          // 浏览器拒绝 autoplay，静默处理
+          self.playing = false;
+          self._updateUI();
+        });
+      }
+      this._updateUI();
     },
 
     stop() {
+      if (!this.audio) return;
       this.playing = false;
-      if (this.schedulerTimer) {
-        clearTimeout(this.schedulerTimer);
-        this.schedulerTimer = null;
-      }
-      // 立即静音并清理当前节点，避免尾音拖长
-      if (this.masterGain && this.ctx) {
-        const t = this.ctx.currentTime;
-        this.masterGain.gain.cancelScheduledValues(t);
-        this.masterGain.gain.setValueAtTime(this.volume, t);
-      }
-      this.activeNodes.forEach((n) => {
-        try { n.stop(); } catch (e) {}
-      });
-      this.activeNodes = [];
+      this.audio.pause();
+      this._updateUI();
+      this._saveSettings();
     },
 
     toggle() {
+      this._init();
       if (this.playing) {
         this.stop();
         return false;
       }
-      this.start();
+      // 如果还没加载过曲目，从头开始
+      if (!this.audio.src) {
+        this.start();
+      } else {
+        this._play();
+      }
+      this._saveSettings();
       return true;
     },
 
-    setVolume(v) {
-      this.volume = Math.max(0, Math.min(1, v / 100));
-      if (this.masterGain && this.ctx) {
-        const t = this.ctx.currentTime;
-        this.masterGain.gain.cancelScheduledValues(t);
-        this.masterGain.gain.setTargetAtTime(this.volume, t, 0.02);
+    // ============ 曲目切换 ============
+    next() {
+      this._init();
+      this._nextTrack();
+      if (this.playing) {
+        this._play();
       }
+      this._saveSettings();
     },
 
-    // 手动切到下一首（无缝：下个调度循环自然过渡）
-    skip() {
-      this.currentBeat = TRACKS[this.trackIndex].totalBeats; // 触发下次 tick 切换
+    prev() {
+      this._init();
+      this.trackIndex = (this.trackIndex - 1 + PLAYLIST.length) % PLAYLIST.length;
+      this._loadTrack(this.trackIndex);
+      if (this.playing) {
+        this._play();
+      }
+      this._updateUI();
+      this._saveSettings();
+    },
+
+    _nextTrack() {
+      this.trackIndex = (this.trackIndex + 1) % PLAYLIST.length;
+      this._loadTrack(this.trackIndex);
+      // 如果正在播放，继续播放下一首
+      if (this.playing) {
+        this._play();
+      }
+      this._updateUI();
+      this._saveSettings();
+    },
+
+    _loadTrack(index) {
+      if (!this.audio) return;
+      var track = PLAYLIST[index];
+      if (!track) return;
+      this.trackIndex = index;
+      this.audio.src = track.file;
+      this.audio.load();
+    },
+
+    // ============ 音量 ============
+    setVolume(v) {
+      this.volume = Math.max(0, Math.min(1, v / 100));
+      if (this.audio) {
+        this.audio.volume = this.volume;
+      }
+      this._saveSettings();
     },
 
     // ============ UI 同步 ============
-    _updateTrackName() {
-      const btn = document.getElementById("bgmToggleButton");
-      if (!btn) return;
-      const track = TRACKS[this.trackIndex];
-      if (!track) return;
-      btn.textContent = "♪ " + track.name;
-      btn.title = "背景音乐：" + track.name + "（点击切换开关）";
-    },
+    _updateUI() {
+      var btn = document.getElementById("bgmToggleButton");
+      var nameEl = document.getElementById("bgmTrackName");
+      var track = PLAYLIST[this.trackIndex];
+      var trackName = track ? track.name : "";
 
-    // ============ 内部：lookahead 调度器 ============
-    _tick() {
-      if (!this.playing || !this.ctx) return;
-      const lookahead = 0.12; // 提前 120ms 调度，给浏览器留足渲染缓冲
-      const interval = 25; // 每 25ms 检查一次
-
-      // 关键：每次迭代重新读取当前 track 和 BPM
-      // 当 track 切换时，下一拍立即用新 BPM 调度 → 无缝衔接
-      while (this.nextNoteTime < this.ctx.currentTime + lookahead) {
-        const track = TRACKS[this.trackIndex];
-        const secPerBeat = 60 / track.bpm;
-
-        this._scheduleBeat(track, this.currentBeat, this.nextNoteTime, secPerBeat);
-        this.currentBeat++;
-        this.nextNoteTime += secPerBeat;
-
-        // 当前曲目播完，切换到下一首
-        // nextNoteTime 不重置 → 下一拍紧接着上一拍开始 → 无缝
-        if (this.currentBeat >= track.totalBeats) {
-          this.currentBeat = 0;
-          this.trackIndex = (this.trackIndex + 1) % TRACKS.length;
-          this._updateTrackName();
+      if (btn) {
+        if (this.playing) {
+          btn.textContent = "🎵";
+          btn.setAttribute("aria-pressed", "true");
+          btn.classList.remove("bgm-off");
+          btn.title = "背景音乐：播放中（点击暂停）";
+        } else {
+          btn.textContent = "🔇";
+          btn.setAttribute("aria-pressed", "false");
+          btn.classList.add("bgm-off");
+          btn.title = "背景音乐：已暂停（点击播放）";
         }
       }
-
-      this.schedulerTimer = setTimeout(() => this._tick(), interval);
-    },
-
-    _scheduleBeat(track, beat, time, secPerBeat) {
-      // 调度所有起始拍位等于 beat 的音符
-      // melody: square 主旋律
-      track.melody.forEach((n) => {
-        if (n[1] === beat) this._playNote(n, time, secPerBeat, "square", 0.16, "melody");
-      });
-      // bass: triangle 低音
-      track.bass.forEach((n) => {
-        if (n[1] === beat) this._playNote(n, time, secPerBeat, "triangle", 0.22, "bass");
-      });
-      // pad: sawtooth 长持续和声，低 gain
-      track.pad.forEach((n) => {
-        if (n[1] === beat) this._playNote(n, time, secPerBeat, "sawtooth", 0.05, "pad");
-      });
-      // hat: noise 短促 hi-hat（仅 Track 1 数据中含）
-      track.hat.forEach((n) => {
-        if (n[1] === beat) this._playHat(time, secPerBeat);
-      });
-    },
-
-    _playNote(noteData, time, secPerBeat, type, peakGain, role) {
-      const [name, beat, durBeats] = noteData;
-      const freq = noteToFreq(name);
-      if (freq === 0) return; // 休止符
-      const dur = durBeats * secPerBeat;
-
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = type;
-      osc.frequency.value = freq;
-      osc.connect(gain);
-      gain.connect(this.masterGain);
-
-      // ADSR：不同 role 用不同包络，模拟 8-bit 风格
-      let attack, decay, sustainRatio, release;
-      if (role === "melody") {
-        // 主旋律：快速 attack，中等 sustain，快 release（典型 FC square 风格）
-        attack = 0.005;
-        decay = 0.04;
-        sustainRatio = 0.75;
-        release = Math.min(0.06, dur * 0.2);
-      } else if (role === "bass") {
-        // 低音 triangle：稍慢 attack，长 sustain，中 release
-        attack = 0.01;
-        decay = 0.08;
-        sustainRatio = 0.85;
-        release = Math.min(0.1, dur * 0.15);
-      } else {
-        // pad sawtooth：慢 attack，长 sustain，慢 release
-        attack = 0.15;
-        decay = 0.2;
-        sustainRatio = 0.6;
-        release = Math.min(0.4, dur * 0.3);
+      if (nameEl) {
+        nameEl.textContent = trackName;
       }
-      const sustainLevel = peakGain * sustainRatio;
-      const sustainDur = Math.max(0.02, dur - attack - decay - release);
-
-      gain.gain.setValueAtTime(0, time);
-      gain.gain.linearRampToValueAtTime(peakGain, time + attack);
-      gain.gain.linearRampToValueAtTime(sustainLevel, time + attack + decay);
-      gain.gain.setValueAtTime(sustainLevel, time + attack + decay + sustainDur);
-      gain.gain.linearRampToValueAtTime(0, time + dur);
-
-      osc.start(time);
-      osc.stop(time + dur + 0.05);
-
-      this.activeNodes.push(osc);
-      // 定时清理引用，避免数组无限增长
-      const cleanupAt = (time + dur + 0.1 - this.ctx.currentTime) * 1000;
-      setTimeout(() => {
-        const idx = this.activeNodes.indexOf(osc);
-        if (idx >= 0) this.activeNodes.splice(idx, 1);
-      }, Math.max(50, cleanupAt));
     },
 
-    // hi-hat：噪声短促爆发，模拟 8-bit percussion
-    _playHat(time, secPerBeat) {
-      if (!this.noiseBuffer) return;
-      const src = this.ctx.createBufferSource();
-      src.buffer = this.noiseBuffer;
-      const gain = this.ctx.createGain();
-      const filter = this.ctx.createBiquadFilter();
-      filter.type = "highpass";
-      filter.frequency.value = 6000; // 只保留高频，更像 hi-hat
-      src.connect(filter);
-      filter.connect(gain);
-      gain.connect(this.masterGain);
-
-      const dur = 0.04;
-      const peak = 0.04;
-      gain.gain.setValueAtTime(0, time);
-      gain.gain.linearRampToValueAtTime(peak, time + 0.002);
-      gain.gain.exponentialRampToValueAtTime(0.0001, time + dur);
-
-      src.start(time);
-      src.stop(time + dur + 0.02);
-
-      this.activeNodes.push(src);
-      const cleanupAt = (time + dur + 0.05 - this.ctx.currentTime) * 1000;
-      setTimeout(() => {
-        const idx = this.activeNodes.indexOf(src);
-        if (idx >= 0) this.activeNodes.splice(idx, 1);
-      }, Math.max(50, cleanupAt));
+    // ============ 获取状态（调试用）============
+    getState() {
+      return {
+        playing: this.playing,
+        volume: this.volume,
+        trackIndex: this.trackIndex,
+        trackName: PLAYLIST[this.trackIndex] ? PLAYLIST[this.trackIndex].name : "",
+        playlist: PLAYLIST
+      };
     }
   };
 
   // ============ UI 绑定 ============
-  // 浏览器自动播放策略：必须等用户首次交互才能启动 AudioContext
-  let userInteracted = false;
-  let pendingAutostart = true; // 默认尝试自动开始（配置：默认开）
+  var userInteracted = false;
 
   function bindUI() {
-    const toggleBtn = document.getElementById("bgmToggleButton");
-    const volumeRange = document.getElementById("bgmVolumeRange");
+    var toggleBtn = document.getElementById("bgmToggleButton");
+    var volumeRange = document.getElementById("bgmVolumeRange");
+    var prevBtn = document.getElementById("bgmPrevButton");
+    var nextBtn = document.getElementById("bgmNextButton");
 
+    // 初始化 BGM
+    BGM._init();
+
+    // 读取设置：是否默认开启
+    var settings = BGM._loadSettings();
+
+    // 设置音量条初始值
+    if (volumeRange) {
+      volumeRange.value = Math.round(BGM.volume * 100);
+    }
+
+    // 更新 UI 为初始状态（暂停）
+    BGM.playing = false;
+    BGM._updateUI();
+
+    // 音乐按钮：播放 ↔ 暂停
     if (toggleBtn) {
-      toggleBtn.addEventListener("click", () => {
+      toggleBtn.addEventListener("click", function () {
         userInteracted = true;
-        const playing = BGM.toggle();
-        toggleBtn.setAttribute("aria-pressed", String(playing));
-        if (playing) {
-          BGM._updateTrackName(); // 显示当前曲名
-        } else {
-          toggleBtn.textContent = "♪ 关";
-          toggleBtn.classList.add("bgm-off");
-        }
-        if (playing) toggleBtn.classList.remove("bgm-off");
+        BGM.toggle();
       });
     }
 
+    // 音量条
     if (volumeRange) {
-      volumeRange.addEventListener("input", (e) => {
+      volumeRange.addEventListener("input", function (e) {
         BGM.setVolume(Number(e.target.value));
       });
     }
 
-    // 首次用户交互（点击/按键）时自动启动 BGM
-    function tryAutostart() {
-      if (userInteracted || !pendingAutostart) return;
-      userInteracted = true;
-      BGM.start();
-      if (toggleBtn) {
-        toggleBtn.setAttribute("aria-pressed", "true");
-        toggleBtn.classList.remove("bgm-off");
-        BGM._updateTrackName();
-      }
-      document.removeEventListener("click", tryAutostart);
-      document.removeEventListener("keydown", tryAutostart);
+    // 上一首 / 下一首
+    if (prevBtn) {
+      prevBtn.addEventListener("click", function () {
+        userInteracted = true;
+        BGM.prev();
+      });
     }
-    document.addEventListener("click", tryAutostart, { once: false });
-    document.addEventListener("keydown", tryAutostart, { once: false });
+    if (nextBtn) {
+      nextBtn.addEventListener("click", function () {
+        userInteracted = true;
+        BGM.next();
+      });
+    }
+
+    // 用户首次明确交互后自动启动 BGM
+    // 交互包括：点击开始游戏、创建房间、加入房间、音乐按钮、任意点击/键盘
+    if (settings.enabled) {
+      function tryAutostart() {
+        if (userInteracted) return;
+        userInteracted = true;
+        // 只在设置开启时自动启动
+        BGM.start();
+        document.removeEventListener("click", tryAutostart);
+        document.removeEventListener("keydown", tryAutostart);
+      }
+      document.addEventListener("click", tryAutostart, { once: false });
+      document.addEventListener("keydown", tryAutostart, { once: false });
+    }
   }
 
   if (document.readyState === "loading") {
@@ -844,6 +311,6 @@
     bindUI();
   }
 
-  // 暴露到全局（便于调试与外部调用）
+  // 暴露到全局
   window.BGM = BGM;
 })();

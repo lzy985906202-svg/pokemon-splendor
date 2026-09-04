@@ -1631,6 +1631,22 @@ body.phase-discard .token[data-player-token-color]:hover {
   accent-color: var(--accent);
 }
 
+.bgm-track-name {
+  font-size: 12px;
+  color: var(--accent-dark);
+  font-weight: 700;
+  white-space: nowrap;
+  min-width: 3em;
+  text-align: center;
+}
+
+.bgm-nav-btn {
+  min-width: 28px;
+  padding: 4px 6px !important;
+  font-size: 14px !important;
+  line-height: 1;
+}
+
 /* 手机端：BGM 音量条窄一点，按钮够大可点 */
 @media (max-width: 820px) {
   .bgm-volume {
