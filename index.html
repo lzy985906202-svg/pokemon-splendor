@@ -26,6 +26,7 @@
       <span id="topCurrentPlayer" class="top-current">等待开始</span>
       <span id="phaseBadge" class="phase-badge">—</span>
       <span id="turnLine" class="turn-badge">第 — 轮</span>
+      <span id="topActionButtons" class="top-action-buttons"></span>
     </div>
     <div class="top-right">
       <div class="card-size-controls">
@@ -169,10 +170,21 @@
 
         </div>
 
-        <!-- ============ SELECTED CARD PANEL (选中卡详情) ============ -->
-        <aside class="selected-card-panel panel">
-          <h3>选中卡</h3>
-          <div id="selectedCardInfo" class="selected-card-info">未选择</div>
+        <!-- ============ COLLECTION PANEL (v0.9.14: 已捕捉 + 进化记录 + 选中卡overlay) ============ -->
+        <aside class="collection-panel panel">
+          <!-- 永久层：已捕捉 + 进化记录 -->
+          <div class="collection-body">
+            <div class="cp-section">
+              <h4>已捕捉</h4>
+              <div id="tableauCards" class="mini-card-list"></div>
+            </div>
+            <div class="cp-section">
+              <h4>进化记录</h4>
+              <div id="evolvedArchive" class="evolve-list"></div>
+            </div>
+          </div>
+          <!-- Overlay 层：选中卡详情（有内容时覆盖永久层） -->
+          <div id="selectedCardInfo" class="selected-card-overlay"></div>
         </aside>
 
         <!-- ============ SUPPLY COLUMN (竖排供应区) ============ -->
@@ -190,27 +202,6 @@
         <aside class="players-sidebar panel">
           <h3>玩家</h3>
           <div id="playersSidebar" class="players-list"></div>
-        </aside>
-
-        <!-- ============ BOTTOM: COLLECTION PANEL (v0.9.13) ============ -->
-        <!-- 仅保留 已捕捉 / 进化记录；token/减免/保留卡 已由右侧玩家栏展示 -->
-        <div class="bottom-player-area panel">
-          <div class="bp-body">
-            <div class="bp-col">
-              <h4>已捕捉</h4>
-              <div id="tableauCards" class="mini-card-list"></div>
-            </div>
-            <div class="bp-col">
-              <h4>进化记录</h4>
-              <div id="evolvedArchive" class="mini-card-list"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ============ ACTION LOG ============ -->
-        <aside class="action-log panel">
-          <h3>行动日志</h3>
-          <div id="actionLogContent" class="action-log-content"></div>
         </aside>
 
       </div>

@@ -62,6 +62,8 @@ let aiTurnKey = null;
 let aiScheduleVersion = 0;
 let aiPaused = false;
 let pendingTokenSelection = [];
+// v0.9.14: 行动日志默认折叠（仅显示最近 3 条），点击展开查看全部
+let actionLogExpanded = false;
 // v0.9.0 联机模式状态
 let onlineMode = false;
 let onlineSocket = null;
@@ -3285,6 +3287,14 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
     render();
   }
 
+  // v0.9.14: 清除选中卡（仅 UI，不影响游戏逻辑）
+  function clearSelectedCard() {
+    if (gameState) {
+      gameState.selectedCard = null;
+      render();
+    }
+  }
+
   function getSelectedCardRef() {
     if (!gameState?.selectedCard) return null;
     const { source, cardId, marketKey, ownerIndex } = gameState.selectedCard;
@@ -3470,15 +3480,17 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
     if (els.turnLine) els.turnLine.textContent = `第 ${gameState.turnNumber} 轮`;
 
     // v0.9.13: 底部仅保留 已捕捉 / 进化记录（token/减免/保留卡 由右侧玩家栏展示）
+    // v0.9.14: 已捕捉改为 4 列网格 + 轻量缩略卡（图片/名称/等级），不显示费用/按钮/查看大图
     if (els.tableauCards) {
       els.tableauCards.innerHTML = localP && localP.tableau.length
-        ? localP.tableau.map((card) => renderCard(card, "tableau")).join("")
-        : `<div class="muted">暂无</div>`;
+        ? localP.tableau.map((card) => renderTableauMiniCard(card)).join("")
+        : `<div class="collection-empty">暂无捕捉</div>`;
     }
     if (els.evolvedArchive) {
+      // v0.9.14: 进化记录改为文字箭头链（妙蛙种子 → 妙蛙草 → …）
       els.evolvedArchive.innerHTML = localP && localP.evolvedArchive.length
-        ? localP.evolvedArchive.map((card) => renderCard(card, "tableau")).join("")
-        : `<div class="muted">无</div>`;
+        ? localP.evolvedArchive.map((card) => `<span class="evolve-item">${escapeHtml(getCardName(card))}</span>`).join('<span class="evolve-arrow">→</span>')
+        : `<div class="collection-empty">暂无进化记录</div>`;
     }
 
     // body class 切换 phase
@@ -3772,9 +3784,9 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
   function renderActionLog() {
     if (!els.actionLogContent || !gameState) return;
     const logs = gameState.actionLog || [];
-    // 显示最后 60 条（UI 上保留显示）
-    const recent = logs.slice(-60);
-    els.actionLogContent.innerHTML = recent.map((entry) => {
+    // v0.9.14: 默认折叠仅显示最近 3 条，展开显示最近 60 条；不修改日志数据
+    const recent = actionLogExpanded ? logs.slice(-60) : logs.slice(-3);
+    const entriesHtml = recent.map((entry) => {
       const isAI = /AI/.test(entry.player || "");
       const cls = isAI ? "ai" : "";
       return `<div class="action-log-entry ${cls}">
@@ -3783,6 +3795,11 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
         ${escapeHtml(entry.message)}
       </div>`;
     }).join("") || `<div class="muted">暂无记录</div>`;
+    // 折叠时显示"展开查看全部"按钮；展开时显示"收起"
+    const toggleBtn = logs.length > 3
+      ? `<button type="button" class="action-log-toggle" data-action="toggle-action-log">${actionLogExpanded ? "收起" : `展开查看全部 (${logs.length})`}</button>`
+      : "";
+    els.actionLogContent.innerHTML = entriesHtml + toggleBtn;
     // 自动滚动到底部
     els.actionLogContent.scrollTop = els.actionLogContent.scrollHeight;
   }
@@ -3849,6 +3866,7 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
     renderSelectedInfo(player);
     renderDiscardPanel(player);
     renderEvolveOptions(player);
+    renderTopActionButtons(player);
 
     els.takeThreeButton.disabled = !actionEnabled;
     els.takeTwoButton.disabled = !actionEnabled;
@@ -3857,6 +3875,25 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
     els.buySelectedButton.disabled = !actionEnabled;
     els.skipEvolutionButton.disabled = gameState.phase !== "evolve" || isAI;
     if (els.undoButton) els.undoButton.disabled = !historyStack.length || isAI;
+  }
+
+  // v0.9.14: 顶栏操作按钮（结束回合 / 完成进化阶段），仅当前玩家可见
+  function renderTopActionButtons(player) {
+    if (!els.topActionButtons) return;
+    const isAI = Boolean(player?.isAI);
+    const isSpectator = Boolean(gameState?.spectatorMode);
+    const onlineNotMyTurn = onlineMode && onlineSeatIndex != null && gameState.currentPlayerIndex !== onlineSeatIndex;
+    if (isAI || isSpectator || onlineNotMyTurn) {
+      els.topActionButtons.innerHTML = "";
+      return;
+    }
+    if (gameState.phase === "evolve") {
+      els.topActionButtons.innerHTML = `<button type="button" class="top-action-btn" data-action="skip-evolve">完成进化阶段</button>`;
+    } else if (gameState.phase === "awaitAction" && gameState.mainActionDone) {
+      els.topActionButtons.innerHTML = `<button type="button" class="top-action-btn" data-action="skip-evolve">结束回合</button>`;
+    } else {
+      els.topActionButtons.innerHTML = "";
+    }
   }
 
   function renderTakeControls(actionEnabled) {
@@ -3924,54 +3961,37 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
     const isSpectator = Boolean(gameState?.spectatorMode);
     const canAct = gameState.phase === "awaitAction" && !gameState.mainActionDone && !isAI && !isSpectator;
 
-    // v0.9.1 联机模式：非本地玩家回合时，显示等待提示（也覆盖 phase 提示）
+    // v0.9.14: 联机模式非本地玩家回合 → 顶栏已显示，overlay 仅在有选中卡时显示精简提示
     const onlineNotMyTurn = onlineMode && onlineSeatIndex != null && gameState.currentPlayerIndex !== onlineSeatIndex;
     if (onlineNotMyTurn && onlineSpectatorIndex == null) {
-      const actingPlayer = currentPlayer();
-      const actingName = actingPlayer?.name || "其他玩家";
-      let phaseHint = "";
-      if (gameState.phase === "discard") phaseHint = `，${actingName} 正在丢弃 token`;
-      else if (gameState.phase === "evolve") phaseHint = `，${actingName} 正在选择进化`;
-      els.selectedCardInfo.innerHTML = `
-        <div class="selected-card-hint cannot">当前不是你的回合</div>
-        <div class="card-line">请等待 <strong>${escapeHtml(actingName)}</strong> 操作${phaseHint}。</div>
-        ${ref ? renderSelectedCardOnlyHtml(ref) : ""}
-      `;
+      if (ref) {
+        const imgHtml = ref.card.image
+          ? buildImgTagWithFallback(getCardThumbnailPath(ref.card.image), { className: "selected-card-img", alt: getCardName(ref.card), loading: "lazy", decoding: "async", fallbackSrc: ref.card.image })
+          : "";
+        els.selectedCardInfo.innerHTML = `
+          <button type="button" class="overlay-close-btn" data-action="clear-selected" title="关闭">×</button>
+          ${imgHtml}
+          <strong>${escapeHtml(getCardName(ref.card))}</strong>
+          <div class="card-line">${escapeHtml(cardTypeText(ref.card))}</div>
+          <div class="selected-card-hint cannot">当前不是你的回合</div>
+        `;
+      } else {
+        els.selectedCardInfo.innerHTML = "";
+      }
       return;
     }
     if (onlineSpectatorIndex != null) {
-      const actingPlayer = currentPlayer();
-      const actingName = actingPlayer?.name || "—";
-      els.selectedCardInfo.innerHTML = `
-        <div class="selected-card-hint info">观战模式</div>
-        <div class="card-line">当前 <strong>${escapeHtml(actingName)}</strong> 的回合。</div>
-        ${ref ? renderSelectedCardOnlyHtml(ref) : ""}
-      `;
+      els.selectedCardInfo.innerHTML = "";
       return;
     }
 
-    // 进化阶段提示
+    // v0.9.14: 进化阶段 → overlay 显示精简提示，按钮移至顶栏
     if (gameState.phase === "evolve") {
       const options = getEvolveOptions(player);
-      let evolveHtml = `
+      els.selectedCardInfo.innerHTML = `
         <div class="selected-card-hint info">进化阶段</div>
-        ${options.length > 0 ? `<div class="card-line">可进化 ${options.length} 项，点击金色卡牌完成进化</div>` : `<div class="card-line muted">当前无可进化选项</div>`}
-        <div class="selected-card-actions">
-          <button type="button" class="skip-evolve-btn" ${isAI ? "disabled" : ""}>跳过进化 / 结束回合</button>
-        </div>
+        <div class="card-line">${options.length > 0 ? `可进化 ${options.length} 项，点击紫色卡牌完成进化` : "当前无可进化选项"}</div>
       `;
-      // 如果有选中卡，也显示详情
-      if (ref) {
-        const imageHtml = ref.card.image
-          ? buildImgTagWithFallback(getCardThumbnailPath(ref.card.image), { className: "selected-card-img", alt: getCardName(ref.card), loading: "lazy", decoding: "async", fallbackSrc: ref.card.image })
-          : "";
-        evolveHtml = `
-          ${imageHtml}
-          <strong>${escapeHtml(getCardName(ref.card))}</strong>
-          <div class="card-line">${escapeHtml(cardTypeText(ref.card))}</div>
-        ` + evolveHtml;
-      }
-      els.selectedCardInfo.innerHTML = evolveHtml;
       return;
     }
 
@@ -3981,16 +4001,14 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
       els.selectedCardInfo.innerHTML = `
         <div class="selected-card-hint cannot">token 超限</div>
         <div class="card-line">当前 ${totalTokens(player.tokens)} 个，还需丢弃 ${needDiscard} 个。</div>
-        <div class="card-line muted">点击底部你的 token 进行丢弃。</div>
+        <div class="card-line muted">点击右侧玩家栏你的 token 进行丢弃。</div>
       `;
       return;
     }
 
+    // v0.9.14: 无选中卡 → overlay 留空，露出收藏面板
     if (!ref) {
-      const hint = canAct
-        ? `<div class="selected-card-hint info">点击公共区卡牌查看详情</div>`
-        : "";
-      els.selectedCardInfo.innerHTML = hint || "未选择";
+      els.selectedCardInfo.innerHTML = "";
       return;
     }
 
@@ -4001,6 +4019,7 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
         ? buildImgTagWithFallback(getCardThumbnailPath(ref.card.image), { className: "selected-card-img", alt: getCardName(ref.card), loading: "lazy", decoding: "async", fallbackSrc: ref.card.image })
         : "";
       els.selectedCardInfo.innerHTML = `
+        <button type="button" class="overlay-close-btn" data-action="clear-selected" title="关闭">×</button>
         ${imageHtml}
         <strong>${escapeHtml(getCardName(ref.card))}</strong>
         <div class="card-line">${escapeHtml(cardTypeText(ref.card))} / ${escapeHtml(ownerName)} 的保留卡</div>
@@ -4047,11 +4066,11 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
     actionsHtml += '</div>';
 
     els.selectedCardInfo.innerHTML = `
+      <button type="button" class="overlay-close-btn" data-action="clear-selected" title="关闭">×</button>
       ${imageHtml}
       <strong>${escapeHtml(getCardName(ref.card))}</strong>
-      <div class="card-line">${escapeHtml(cardTypeText(ref.card))} / ${ref.source === "reserved" ? "保留区" : "公共区"}</div>
-      ${ref.card.points ? `<div class="card-line">分数：${ref.card.points}</div>` : ""}
-      ${ref.card.bonus ? `<div class="card-line">减免：${bonusText(ref.card)}</div>` : ""}
+      <div class="card-line">${escapeHtml(cardTypeText(ref.card))} · ${ref.source === "reserved" ? "保留区" : "公共区"}</div>
+      ${(ref.card.points || ref.card.bonus) ? `<div class="card-line"><strong>${ref.card.points ? ref.card.points + " 分" : ""}${ref.card.points && ref.card.bonus ? " · " : ""}${ref.card.bonus ? "减免 " + bonusText(ref.card) : ""}</strong></div>` : ""}
       <div class="cost-breakdown">
         <div class="cost-line">
           <strong>原始费用</strong>
@@ -4298,6 +4317,22 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
     }[phase] || phase;
   }
 
+  // v0.9.14: 已捕捉缩略卡 — 仅展示 图片 + 名称 + 等级（不含费用/token/购买/查看大图）
+  function renderTableauMiniCard(card) {
+    const cardName = getCardName(card);
+    const levelText = cardTypeText(card); // "1 级" / "稀有" / "传说"
+    const imgHtml = card.image
+      ? buildImgTagWithFallback(getCardThumbnailPath(card.image), { className: "tmc-img", alt: cardName, loading: "lazy", decoding: "async", fallbackSrc: card.image })
+      : "";
+    return `
+      <article class="tableau-mini-card" title="${escapeHtml(cardName)}｜${escapeHtml(levelText)}">
+        ${imgHtml}
+        <div class="tmc-name">${escapeHtml(cardName)}</div>
+        <div class="tmc-level">${escapeHtml(levelText)}</div>
+      </article>
+    `;
+  }
+
   // =============================
   // 事件绑定
   // =============================
@@ -4307,6 +4342,7 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
       "startScreen", "playerCount", "aiCount", "aiTypeSelect", "startButton", "gameScreen",
       "phaseBadge",
       "tableauCards", "publicBoard", "turnLine", "supplyTokens", "selectedCardInfo",
+      "topActionButtons",
       "takeThreeChoices", "takeThreeButton", "takeTwoColor", "takeTwoButton",
       "reserveSelectedButton", "blindDeck", "blindReserveButton", "buySelectedButton",
       "undoButton",
@@ -4424,13 +4460,33 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
           const ref = getSelectedCardRef();
           if (ref) openCardPreview(ref.card.id);
         }
+        else if (action === "clear-selected") {
+          // v0.9.14: 关闭选中卡 overlay
+          clearSelectedCard();
+        }
+        else if (action === "skip-evolve") {
+          // v0.9.14: 顶栏完成进化/结束回合按钮
+          skipEvolution();
+        }
+        else if (action === "toggle-action-log") {
+          // v0.9.14: 行动日志展开/收起切换（不修改日志数据）
+          actionLogExpanded = !actionLogExpanded;
+          renderActionLog();
+        }
         return;
       }
 
-      // 跳过进化按钮（selected-card-panel 内）
-      const skipEvolveBtn = event.target.closest(".skip-evolve-btn");
+      // 跳过进化按钮（selected-card-panel 内 / v0.9.14 顶栏）
+      const skipEvolveBtn = event.target.closest(".skip-evolve-btn, [data-action='skip-evolve']");
       if (skipEvolveBtn) {
         skipEvolution();
+        return;
+      }
+
+      // v0.9.14: 选中卡 overlay 关闭按钮
+      const clearSelectedBtn = event.target.closest("[data-action='clear-selected']");
+      if (clearSelectedBtn) {
+        clearSelectedCard();
         return;
       }
 
@@ -5434,6 +5490,7 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
     skipEvolution,
     endTurn,
     setSelectedCard,
+    clearSelectedCard,
     drawToMarket,
     updatePlayerScore,
     saveGame,
