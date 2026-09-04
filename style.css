@@ -744,42 +744,20 @@ p {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  max-height: 180px;
+  max-height: 108px;
   overflow: hidden;
   background: rgba(255, 255, 255, 0.89);
 }
 
-.bp-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-  padding-bottom: 6px;
-  border-bottom: 1px solid var(--line);
-  margin-bottom: 6px;
-}
-
-.bp-header h3 {
-  font-size: 14px;
-}
-
-.score-line {
-  margin-left: auto;
-  font-size: 13px;
-}
-
-.score-line strong {
-  color: var(--accent-dark);
-  font-size: 16px;
-}
+/* v0.9.13: 底部已移除 bp-header（token/减免/保留卡由右侧玩家栏展示） */
 
 .bp-body {
   flex: 1;
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 10px;
   min-height: 0;
-  overflow-y: auto;
+  overflow: hidden;
 }
 
 .bp-col {
@@ -787,6 +765,7 @@ p {
   flex-direction: column;
   gap: 4px;
   min-height: 0;
+  min-width: 0;
 }
 
 .bp-col h4 {
@@ -1252,12 +1231,14 @@ p {
 /* ============ MINI CARD (底部玩家区) ============ */
 .mini-card-list {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 4px;
-  max-height: 100%;
-  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
   padding: 2px;
-  align-content: flex-start;
+  align-items: flex-start;
 }
 
 .mini-card-list .card {
@@ -2130,7 +2111,7 @@ body.card-size-large {
     grid-template-columns: minmax(0, 1fr) 140px;
   }
   .bp-body {
-    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr;
   }
 }
 

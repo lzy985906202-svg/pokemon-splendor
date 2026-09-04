@@ -3469,29 +3469,7 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
     if (els.phaseBadge) els.phaseBadge.textContent = phaseText(gameState.phase);
     if (els.turnLine) els.turnLine.textContent = `第 ${gameState.turnNumber} 轮`;
 
-    // 底部玩家区头部（联机模式：显示本地玩家；单机模式：显示 currentPlayer）
-    if (els.currentPlayerName) {
-      els.currentPlayerName.textContent = localP
-        ? `${localP.name}${localP.isAI ? "（AI）" : ""}`
-        : "当前玩家";
-    }
-    if (els.phaseBadgeBottom) els.phaseBadgeBottom.textContent = phaseText(gameState.phase);
-    if (els.scoreLine) {
-      const turns = Number.isInteger(localSeat) ? (gameState.playerTurns[localSeat] ?? 0) : 0;
-      els.scoreLine.innerHTML = `
-        <strong>${localP?.score ?? 0} 分</strong>
-        <span class="muted">回合：${turns} / token：${totalTokens(localP?.tokens || {})}</span>
-      `;
-    }
-
-    // 底部玩家区内容
-    if (els.playerTokens) els.playerTokens.innerHTML = localP ? renderTokens(localP.tokens, true) : "";
-    if (els.playerDiscount) els.playerDiscount.innerHTML = localP ? renderTokens(calculateDiscount(localP), true) : "";
-    if (els.reservedCards) {
-      els.reservedCards.innerHTML = localP && localP.reserved.length
-        ? localP.reserved.map((card) => renderCard(card, "reserved")).join("")
-        : `<div class="muted">0 / 3</div>`;
-    }
+    // v0.9.13: 底部仅保留 已捕捉 / 进化记录（token/减免/保留卡 由右侧玩家栏展示）
     if (els.tableauCards) {
       els.tableauCards.innerHTML = localP && localP.tableau.length
         ? localP.tableau.map((card) => renderCard(card, "tableau")).join("")
@@ -4326,8 +4304,8 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
   function cacheElements() {
     [
       "cardDataStatus", "restartButton", "messageBar", "loadScreen", "cardFileInput",
-      "startScreen", "playerCount", "aiCount", "aiTypeSelect", "startButton", "gameScreen", "currentPlayerName",
-      "phaseBadge", "scoreLine", "playerTokens", "playerDiscount", "reservedCards",
+      "startScreen", "playerCount", "aiCount", "aiTypeSelect", "startButton", "gameScreen",
+      "phaseBadge",
       "tableauCards", "publicBoard", "turnLine", "supplyTokens", "selectedCardInfo",
       "takeThreeChoices", "takeThreeButton", "takeTwoColor", "takeTwoButton",
       "reserveSelectedButton", "blindDeck", "blindReserveButton", "buySelectedButton",
@@ -4343,7 +4321,7 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
       "rulesButton", "rulesModal", "closeRulesButton",
       "toggleAIPauseButton", "aiStepButton", "aiSpeedSelect", "aiSpeedRow", "spectatorNotice",
       // v0.7 新增 DOM
-      "roomBadge", "topCurrentPlayer", "phaseBadgeBottom",
+      "roomBadge", "topCurrentPlayer",
       "playersSidebar", "actionLogContent", "evolvedArchive",
       "pendingTokenHint", "pendingTokenActions", "confirmTokenSelectionButton", "clearTokenSelectionButton",
       // v0.9.0 联机模式 DOM

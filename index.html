@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>宝可梦璀璨宝石桌游 v0.9.12</title>
+  <title>宝可梦璀璨宝石桌游 v0.9.13</title>
   <link rel="stylesheet" href="style.css">
   <script src="/socket.io/socket.io.js" defer></script>
   <script src="online.js" defer></script>
@@ -192,27 +192,10 @@
           <div id="playersSidebar" class="players-list"></div>
         </aside>
 
-        <!-- ============ BOTTOM: CURRENT PLAYER AREA ============ -->
+        <!-- ============ BOTTOM: COLLECTION PANEL (v0.9.13) ============ -->
+        <!-- 仅保留 已捕捉 / 进化记录；token/减免/保留卡 已由右侧玩家栏展示 -->
         <div class="bottom-player-area panel">
-          <div class="bp-header">
-            <h3 id="currentPlayerName">当前玩家</h3>
-            <span id="phaseBadgeBottom" class="phase-badge">—</span>
-            <div id="scoreLine" class="score-line"></div>
-          </div>
-
           <div class="bp-body">
-            <div class="bp-col">
-              <h4>我的 token</h4>
-              <div id="playerTokens" class="token-row"></div>
-            </div>
-            <div class="bp-col">
-              <h4>我的减免</h4>
-              <div id="playerDiscount" class="token-row"></div>
-            </div>
-            <div class="bp-col">
-              <h4>保留卡</h4>
-              <div id="reservedCards" class="mini-card-list"></div>
-            </div>
             <div class="bp-col">
               <h4>已捕捉</h4>
               <div id="tableauCards" class="mini-card-list"></div>

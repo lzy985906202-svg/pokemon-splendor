@@ -163,7 +163,7 @@ const socketToMember = new Map();
 const ROOM_CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // 去掉易混字符
 const ROOM_CODE_LENGTH = 4;
 const ROOM_EXPIRE_MS = 2 * 60 * 60 * 1000; // 2 小时无人操作过期
-const VERSION = "0.9.12";
+const VERSION = "0.9.13";
 
 function generatePlayerToken() {
   // 稳定、随机、不可预测的玩家身份凭证（刷新后不变）
