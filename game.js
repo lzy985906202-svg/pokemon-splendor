@@ -3493,6 +3493,35 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
         : `<div class="collection-empty">暂无进化记录</div>`;
     }
 
+    // 清除 online session localStorage
+    function _clearOnlineSession() {
+      try { localStorage.removeItem("pokemonSplendorOnlineSession.v1"); } catch (e) { /* noop */ }
+    }
+
+    // 从重新开始入口返回开始界面
+    function showStartScreenFromRestart() {
+      // 显示开始屏幕，隐藏游戏 screen
+      if (els.startScreen) els.startScreen.classList.remove("hidden");
+      if (els.gameScreen) els.gameScreen.classList.add("hidden");
+      if (els.finalScreen) els.finalScreen.classList.add("hidden");
+      // 重置顶部栏状态
+      if (els.topCurrentPlayer) els.topCurrentPlayer.textContent = "等待开始";
+      if (els.roomBadge) els.roomBadge.textContent = "单机模式";
+      if (els.phaseBadge) els.phaseBadge.textContent = "—";
+      if (els.turnLine) els.turnLine.textContent = "第 — 轮";
+      if (els.topActionButtons) els.topActionButtons.innerHTML = "";
+      // 重置 gameState 与在线标志
+      gameState = null;
+      clearSavedGame();
+      onlineMode = false;
+      onlineSocket = null;
+      onlineRoomCode = "";
+      onlineSeatIndex = null;
+      onlineIsHost = false;
+      onlineSpectatorIndex = null;
+      onlineConnected = false;
+    }
+
     // body class 切换 phase
     document.body.classList.remove("phase-discard", "phase-evolve", "phase-await");
     if (gameState.phase === "discard") document.body.classList.add("phase-discard");
@@ -4389,8 +4418,24 @@ function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
     });
 
     els.restartButton.addEventListener("click", () => {
-      // P0-2 修复：联机模式禁用本地重新开始（防状态分叉）
-      if (onlineMode) { notify("联机模式不支持本地重新开始，如需新局请新建房间。", "warn"); return; }
+      if (onlineMode) {
+        // 联机模式：弹出确认后执行退出房间流程
+        if (!window.confirm("当前正在联机游戏，退出后将离开房间，是否继续？")) return;
+        // 执行联机退出流程
+        if (window.__pokemonOnline) {
+          window.__pokemonOnline.leaveRoom().then(() => {
+            // 清除在线会话 localStorage
+            _clearOnlineSession();
+            // 返回开始界面
+            showStartScreenFromRestart();
+            notify("已离开房间，可创建新局。", "info");
+          }).catch((err) => {
+            notify("离开房间失败: " + err.message, "error");
+          });
+        }
+        return;
+      }
+      // 单机模式原逻辑
       if (gameState && !window.confirm("确认清除当前存档并回到开始界面？")) return;
       clearAISchedule();
       clearSavedGame();
